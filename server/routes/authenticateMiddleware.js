@@ -16,7 +16,6 @@ catch (error){
 		errormessage:"access denied"
 	}})
 }
-console.log("jwt token",isCorrect);
 }
 
 module.exports=authenticate;
