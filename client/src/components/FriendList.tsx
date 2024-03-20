@@ -32,7 +32,7 @@ export default function FriendList() {
   } else
     return (
       <div>
-        {users.map((element:FriendBoxInterface) => {
+        {users.length===0?<p>No users</p>:users.map((element:FriendBoxInterface) => {
           return (
             <FriendBox
               key={element.username}

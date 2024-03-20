@@ -3,7 +3,7 @@ import classNames from "../../../utils/classNames";
 import {
   ErrorTextProps,
   TextInputProps,
-} from "../../../interfaces/ComponentInterfaces";
+} from "../../../interfaces/componentInterfaces";
 import { useState } from "react";
 import { faEye, faEyeSlash } from "@fortawesome/free-regular-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";

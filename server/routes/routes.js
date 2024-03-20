@@ -10,16 +10,29 @@ const authenticate = require("./authenticateMiddleware");
 const sendMail = require("./mailsender");
 const ErrorCodes = require("../constants");
 const cookieParser = require("cookie-parser");
-const cors = require("cors");
 router.use(cookieParser());
 
-router.get("/users", (req, res) => {
-  res.send(JSON.stringify({ users: "hello" }));
+router.get("/users", async(req, res) => {
+  try {
+    await connectToDB();
+    const users=await User.find({});
+    res.status(200).json({
+      users,
+      noOfUser:users.length
+    })
+    
+  } catch (error) {
+    res.status(200).json({
+      error:{
+        errorMessage:"",
+      }
+    })
+  }
 });
 
 router.post("/register", async (req, res) => {
-  const { fullName, email, password } = req.body;
-  console.log("body",fullName,email,password)
+  const { username, email, password } = req.body;
+  console.log("body",username,email,password)
   try {
     await connectToDB();
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -31,13 +44,13 @@ router.post("/register", async (req, res) => {
       text: verificationCode.toString(),
     });
     const newUser = await User.create({
-      username: fullName,
+      username,
       email,
     });
     const newUserCredentials = await UserCredentials.create({
       email,
       password: hashedPassword,
-      userid: newUser._id,
+      user: newUser._id,
       code: hashedCode,
     });
     res.send(JSON.stringify(newUser));
@@ -58,7 +71,7 @@ router.post("/login", async (req, res) => {
   try {
     await connectToDB();
     const { email, password } = req.body;
-    const userDetail = await UserCredentials.findOne({ email });
+    const userDetail = await UserCredentials.findOne({ email }).populate("user");
     if (!userDetail) {
       throw new Error("User doesn't exists");
     }
@@ -81,11 +94,16 @@ router.post("/login", async (req, res) => {
         expiresIn: "86400",
       });
       res.status(200);
+      res.cookie("accessToken",token,{maxAge:86400})
       res.json({
         accessToken: token,
+        email:userDetail.user.email,
+        username:userDetail.user.username
       });
+      return;
     } else {
       throw new Error("password doesn't match");
+      return;
     }
   } catch (error) {
     res.status(error.status || 500);
@@ -94,6 +112,7 @@ router.post("/login", async (req, res) => {
         message: error.message || "something wrong happened",
       },
     });
+    return;
   }
 });
 

@@ -1,5 +1,5 @@
 const nodemailer = require("nodemailer");
-const { google } = require("googleapis");
+const  {google}  = require("googleapis");
 const OAuth2 = google.auth.OAuth2;
 
 async function createTransporter() {
@@ -8,7 +8,6 @@ async function createTransporter() {
     process.env.GOOGLE_CLIENT_SECRET,
     "https://developers.google.com/oauthplayground"
   );
-
   oauth2Client.setCredentials({
     refresh_token: process.env.GOOGLE_REFRESH_TOKEN,
   });

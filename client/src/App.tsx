@@ -3,14 +3,15 @@ import ReduxProvider from "../redux/ReduxProvider";
 import Toast from "./components/Toast";
 import Login from "./sections/Login.tsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
-import Front from "./sections/Front.tsx";
 import Signup from "./sections/Signup.tsx";
+import AuthenticatedRoute from "./AuthenticatedRoute.tsx";
 
 function App() {
+
   const router = createBrowserRouter([
     {
       path: "/",
-      element: <Front />,
+      element: <AuthenticatedRoute />,
     },
     {
       path: "/login",

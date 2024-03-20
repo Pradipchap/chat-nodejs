@@ -1,8 +1,42 @@
-import GoogleLogo from "../assets/google.svg"
+import GoogleLogo from "../assets/google.svg";
 import Input from "../components/Inputs/Input";
 import Checkbox from "../components/Inputs/Checkbox";
 import Button from "../components/Button";
+import { FormEvent } from "react";
+import useToast from "../../customHooks/useToast";
+import { useNavigate } from "react-router-dom";
+import getFormElementValues from "../../functions/getFormElementValues";
+import { SERVER_BASE_URL } from "../../utils/constants";
+
 export default function Login() {
+  const { showError, showLoading, showSuccess } = useToast();
+  const navigate = useNavigate();
+  async function loginHandler(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const requestData = getFormElementValues(event);
+    showLoading("loading");
+    try {
+      const response = await fetch(SERVER_BASE_URL+ "/api/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(requestData),
+      });
+      const result = await response.json();
+      if (await response.ok) {
+        showSuccess("User successfully created");
+        document.cookie = `chatAppDetails=${JSON.stringify(
+          result
+        )};max-age=86400`;
+        navigate("/");
+      } else {
+        showError("user cannot be registered");
+      }
+    } catch (error) {
+      showError("user cannot be registered");
+    }
+  }
 
   return (
     <div className="w-full min-h-screen h-full flex flex-none justify-center items-center p-5">
@@ -12,12 +46,13 @@ export default function Login() {
           Sign in to start your session.
         </p>
         <form
+          onSubmit={loginHandler}
           className="space-y-4 2xl:space-y-7 mt-6 flex flex-col"
         >
           <Input
             type="text"
-            name="username"
-            label="Email/Phone number"
+            name="email"
+            label="Email number"
             placeholder="Enter your email or phone number"
             containerClassName="2xl:h-14 2xl text-lg"
           />
@@ -35,10 +70,7 @@ export default function Login() {
             <Checkbox label="Remember me" name="rememberme" />
             <a href="/">Forgot Password?</a>
           </div>
-          <Button
-            type="submit"
-            className="w-full text-lg"
-          >
+          <Button type="submit" className="w-full text-lg">
             Sign in
           </Button>
           <button
