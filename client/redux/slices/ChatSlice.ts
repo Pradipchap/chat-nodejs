@@ -13,12 +13,15 @@ const CHAT_SLICE = createSlice({
     chats: [""],
   },
   reducers: {
-    updateCurrentChat: (state, action) => {
-      state.primaryChatter = action.payload.currentChatter;
+    updateCurrentChatter: (state, action) => {
+      state.primaryChatter = action.payload.primaryChatter;
       state.secondaryChatter = action.payload.secondaryChatter;
+    },
+    updateChats: (state, action) => {
+      state.chats = action.payload.chats;
     },
   },
 });
 
-export const { updateCurrentChat } = CHAT_SLICE.actions;
+export const { updateCurrentChatter, updateChats } = CHAT_SLICE.actions;
 export default CHAT_SLICE.reducer;

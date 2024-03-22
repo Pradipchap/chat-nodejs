@@ -3,7 +3,8 @@ import { MessageInterface } from "../../interfaces/dataInterfaces";
 export default function ChatMessage({
   message,
   time,
-  username,
+  primaryChatter,
+  secondaryChatter
 }: MessageInterface) {
   return (
     <div className=" h-12 w-max flex gap-2 items-center">

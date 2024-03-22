@@ -10,6 +10,8 @@ const authenticate = require("./authenticateMiddleware");
 const sendMail = require("./mailsender");
 const ErrorCodes = require("../constants");
 const cookieParser = require("cookie-parser");
+const { randomUUID } = require("crypto");
+
 router.use(cookieParser());
 
 router.get("/users", async(req, res) => {
@@ -34,10 +36,24 @@ router.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
   console.log("body",username,email,password)
   try {
+    const websocketId=randomUUID()
     await connectToDB();
+    const doesUserExists=await User.exists({email})
+    console.log("does user exists",doesUserExists)
+    if(doesUserExists!==null){
+      res.status(403);
+    res.json({
+      error: {
+        errorMessage: "User already exists",
+        errorCOde:ErrorCodes.USER_EXISTS
+      }
+    });
+    return;
+  }
     const hashedPassword = await bcrypt.hash(password, 10);
     const verificationCode = Math.ceil(Math.random() * 1000000);
     const hashedCode = await bcrypt.hash(verificationCode.toString(), 10);
+
     await sendMail({
       to: email,
       subject: "verification",
@@ -46,6 +62,7 @@ router.post("/register", async (req, res) => {
     const newUser = await User.create({
       username,
       email,
+      websocketId
     });
     const newUserCredentials = await UserCredentials.create({
       email,
@@ -59,7 +76,7 @@ router.post("/register", async (req, res) => {
     res.status(error.status || 500);
     res.json({
       error: {
-        message: error.message || "something wrong happened",
+        errorMessage: error.message || "something wrong happened",
       },
       
     });
@@ -98,7 +115,9 @@ router.post("/login", async (req, res) => {
       res.json({
         accessToken: token,
         email:userDetail.user.email,
-        username:userDetail.user.username
+        username:userDetail.user.username,
+        userID:userDetail._id,
+        websockedId:userDetail.user.websockedId
       });
       return;
     } else {

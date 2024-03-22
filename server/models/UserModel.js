@@ -10,6 +10,10 @@ const UserSchema = new Schema({
     type: String,
     required: [true, "username is required"],
   },
+  websocketId:{
+    type:String,
+    required:[true,"websocket id is required"]
+  },
   // image: {
   //   type: String,
   //   requied:[true, "image is required"],

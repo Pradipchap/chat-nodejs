@@ -17,11 +17,12 @@ export default function OTP({
   onchange,
   ...rest
 }: OTPProps) {
+
   function handleNumkeyInput(event: KeyboardEvent<HTMLInputElement>) {
     event.preventDefault();
     const keyName = event.key;
     const prevElement = event.currentTarget
-      .previousElementSibling as HTMLInputElement;
+      .previousElementSibling as HTMLInputElement
     const nextElement = event.currentTarget
       .nextElementSibling as HTMLInputElement;
 

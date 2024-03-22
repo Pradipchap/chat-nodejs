@@ -7,16 +7,20 @@ import useToast from "../../customHooks/useToast";
 import { useNavigate } from "react-router-dom";
 import getFormElementValues from "../../functions/getFormElementValues";
 import { SERVER_BASE_URL } from "../../utils/constants";
+import { useAppDispatch } from "../../utils/reduxHooks";
+import { fetchSessionData, updateCurrentUser } from "../../redux/slices/SessionSlice";
 
 export default function Login() {
+  const dispatch = useAppDispatch();
   const { showError, showLoading, showSuccess } = useToast();
   const navigate = useNavigate();
+
   async function loginHandler(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const requestData = getFormElementValues(event);
     showLoading("loading");
     try {
-      const response = await fetch(SERVER_BASE_URL+ "/api/login", {
+      const response = await fetch(SERVER_BASE_URL + "/api/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -29,11 +33,13 @@ export default function Login() {
         document.cookie = `chatAppDetails=${JSON.stringify(
           result
         )};max-age=86400`;
+        dispatch(fetchSessionData());
         navigate("/");
       } else {
-        showError("user cannot be registered");
+        showError("user be registered");
       }
     } catch (error) {
+      console.log(error);
       showError("user cannot be registered");
     }
   }

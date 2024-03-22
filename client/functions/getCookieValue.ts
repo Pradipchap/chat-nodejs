@@ -1,14 +1,10 @@
-interface CookieInterface {
-  accessToken: string;
-  email: string;
-  username: string;
-}
+import { LoginResult } from "../interfaces/dataInterfaces";
 
-export default function getProjectCookieValue(): CookieInterface | null {
+export default function getProjectCookieValue(): LoginResult | null {
   const cookieName = "chatAppDetails";
   const cookieValue = getCookieByName(cookieName);
   if (cookieValue === "") return null;
-  const parsedValue: CookieInterface = JSON.parse(cookieValue);
+  const parsedValue: LoginResult = JSON.parse(cookieValue);
   return parsedValue;
 }
 

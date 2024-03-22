@@ -1,14 +1,30 @@
 import { FriendBoxInterface } from "../../interfaces/dataInterfaces";
+import { updateCurrentChatter } from "../../redux/slices/ChatSlice";
+import { useAppDispatch, useAppSelector } from "../../utils/reduxHooks";
 
 export default function FriendBox({
   username,
   time,
   latestMessage,
-  isActive = false,
   image,
+  email,
+  _id,
 }: FriendBoxInterface) {
+  const dispatch = useAppDispatch();
+  const primaryChatter = useAppSelector((state) => state.currentUser.userID);
+  const currentChat = useAppSelector((state) => state.chat);
+  const isActive = currentChat.secondaryChatter === _id;
+  function updateChatter() {
+    dispatch(
+      updateCurrentChatter({
+        primaryChatter: primaryChatter,
+        secondaryChatter: _id,
+      })
+    );
+  }
   return (
-    <div
+    <button
+      onClick={updateChatter}
       className={`${
         isActive ? "bg-gray-700" : "b"
       } px-2 rounded-lg flex items-center gap-2 mt-2`}
@@ -26,12 +42,12 @@ export default function FriendBox({
 
       <div className="py-2 flex-1">
         {" "}
-        <p className="text-lg font-bold">{username}</p>
+        <p className="text-lg font-bold text-white">{username}</p>
         <div className="flex justify-between items-center gap-2 pt-1 text-gray-400">
           <p className="text-[13px] max-w-32 truncate">{latestMessage}</p>
           <p className="text-[10px]">{time?.toDateString() || ""}</p>
         </div>
       </div>
-    </div>
+    </button>
   );
 }

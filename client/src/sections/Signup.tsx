@@ -49,7 +49,8 @@ export default function Signup() {
         showSuccess("User successfully created");
         setStep({ step: 1, email: email });
       } else {
-        showError("user cannot be registered");
+        const output=await response.json()
+        showError(output.error.errorMessage);
       }
     } catch (error) {
       showError("user cannot be registered");

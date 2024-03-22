@@ -14,8 +14,17 @@ export interface UserFetchResults {
   noOfUser: number;
 }
 
+export interface LoginResult {
+  accessToken: string;
+  email: string;
+  username: string;
+  userID: string;
+  websocketId:string
+}
+
 export interface MessageInterface {
   message: string;
   time?: Date;
-  username: string;
+  primaryChatter: string;
+  secondaryChatter: string;
 }
