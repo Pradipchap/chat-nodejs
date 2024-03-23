@@ -2,7 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 interface CurrentChatInterface {
   primaryChatter: string;
   secondaryChatter: string;
-  chats: string[];
+  chats:{ message: string; isReceiver: boolean }[];
 }
 
 const CHAT_SLICE = createSlice({
@@ -10,7 +10,7 @@ const CHAT_SLICE = createSlice({
   initialState: <CurrentChatInterface>{
     primaryChatter: "",
     secondaryChatter: "",
-    chats: [""],
+    chats: <{ message: string; isReceiver: boolean }[]>[],
   },
   reducers: {
     updateCurrentChatter: (state, action) => {
@@ -18,7 +18,7 @@ const CHAT_SLICE = createSlice({
       state.secondaryChatter = action.payload.secondaryChatter;
     },
     updateChats: (state, action) => {
-      state.chats = action.payload.chats;
+      state.chats.push(action.payload);
     },
   },
 });

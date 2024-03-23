@@ -1,5 +1,5 @@
 import { configureStore } from "@reduxjs/toolkit";
-import UserReducer from "./slices/UsersSlice"
+import UserReducer from "./slices/UsersSlice";
 import ChatReducer from "./slices/ChatSlice";
 import ToastReducer from "./slices/ToastSlice";
 import CurrentUserReducer from "./slices/SessionSlice";
@@ -8,8 +8,8 @@ export const store = configureStore({
   reducer: {
     users: UserReducer,
     chat: ChatReducer,
-    toast:ToastReducer,
-    currentUser:CurrentUserReducer
+    toast: ToastReducer,
+    currentUser: CurrentUserReducer,
   },
 });
 

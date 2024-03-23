@@ -14,6 +14,7 @@ export default function Loginstatus() {
             className="h-10 w-10 rounded-full"
           /> */}
           <p>{session.username}</p>
+          <p>{session.userID}</p>
         </>
       )}
     </div>

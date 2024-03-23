@@ -116,7 +116,7 @@ router.post("/login", async (req, res) => {
         accessToken: token,
         email:userDetail.user.email,
         username:userDetail.user.username,
-        userID:userDetail._id,
+        userID:userDetail.user._id,
         websockedId:userDetail.user.websockedId
       });
       return;

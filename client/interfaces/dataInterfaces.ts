@@ -19,12 +19,11 @@ export interface LoginResult {
   email: string;
   username: string;
   userID: string;
-  websocketId:string
+  websocketId: string;
 }
 
 export interface MessageInterface {
   message: string;
   time?: Date;
-  primaryChatter: string;
-  secondaryChatter: string;
+  isReceiver: boolean;
 }
