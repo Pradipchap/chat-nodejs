@@ -32,6 +32,39 @@ router.get("/users", async(req, res) => {
   }
 });
 
+
+
+router.get("/users/search", async(req, res) => {
+  try {
+    const searchString=req.query.searchString
+    console.log("params",searchString)
+    await connectToDB();
+    const pipeline = [
+      {
+        $search: {
+          index: "usersSearch",
+          autocomplete: {
+            query: searchString,
+            path:"username"
+          }
+        }
+      }
+    ]
+    const users=await User.aggregate(pipeline).limit(10)
+    res.status(200).json({
+      users,
+      noOfUser:users.length
+    })
+    
+  } catch (error) {
+    res.status(200).json({
+      error:{
+        errorMessage:error,
+      }
+    })
+  }
+});
+
 router.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
   console.log("body",username,email,password)

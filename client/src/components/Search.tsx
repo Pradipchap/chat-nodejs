@@ -3,11 +3,12 @@ import { updateUsers } from "../../redux/slices/UsersSlice";
 import { useAppDispatch } from "../../utils/reduxHooks";
 import { UserFetchResults } from "../../interfaces/dataInterfaces";
 import { SERVER_BASE_URL } from "../../utils/constants";
+import useDebounce from "../../customHooks/useDebounce";
 
 export default function Search() {
   const dispatch = useAppDispatch();
   const [input, setInput] = useState("");
-  const {debouncedValue}=useDebou
+  const debouncedValue = useDebounce(input);
 
   useEffect(() => {
     async function fetchUsers() {
@@ -17,7 +18,7 @@ export default function Search() {
       const users: UserFetchResults = await response.json();
       dispatch(updateUsers(users.users));
     }
-    fetchUsers();
+    if (debouncedValue !== "") fetchUsers();
   }, [debouncedValue]);
 
   return (
