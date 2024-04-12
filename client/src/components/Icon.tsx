@@ -25,11 +25,9 @@ import {
   faRightFromBracket,
   faBookOpen,
   faPencilSquare,
+  faPhone,
 } from "@fortawesome/free-solid-svg-icons";
-import {
-  faSpinner,
-  faQuestion,
-} from "@fortawesome/free-solid-svg-icons";
+import { faSpinner, faQuestion } from "@fortawesome/free-solid-svg-icons";
 import {
   faBell,
   faClock,
@@ -40,7 +38,6 @@ import {
   faTrashCan,
   faUser,
 } from "@fortawesome/free-regular-svg-icons";
-
 interface IconProps {
   name: string;
   className?: string;
@@ -167,10 +164,10 @@ export default function Icon({ name, className = "" }: IconProps) {
           className={classNames("text-black text-lg", className)}
         />
       );
-    case "Loading":
+    case "Phone":
       return (
         <FontAwesomeIcon
-          icon={faSpinner}
+          icon={faPhone}
           className={classNames("text-black text-lg", className)}
         />
       );
@@ -286,7 +283,7 @@ export default function Icon({ name, className = "" }: IconProps) {
           className={classNames("text-lg text-black", className)}
         />
       );
-      case "Google":
+    case "Google":
       return (
         <FontAwesomeIcon
           icon={"google"}

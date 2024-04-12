@@ -1,4 +1,4 @@
-import { LegacyRef, useEffect, useRef, useState } from "react";
+import {  useRef, useState } from "react";
 
 export default function Video() {
   const [mediaRecorder, setmediaRecorder] = useState<null | MediaRecorder>(

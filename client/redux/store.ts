@@ -3,6 +3,7 @@ import UserReducer from "./slices/UsersSlice";
 import ChatReducer from "./slices/ChatSlice";
 import ToastReducer from "./slices/ToastSlice";
 import CurrentUserReducer from "./slices/SessionSlice";
+import CallReducer from "./slices//CallSlice";
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     chat: ChatReducer,
     toast: ToastReducer,
     currentUser: CurrentUserReducer,
+    call: CallReducer,
   },
 });
 

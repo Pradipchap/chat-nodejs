@@ -1,12 +1,6 @@
-import { updateChats } from "../../redux/slices/ChatSlice";
+import sendSocketMessage from "../../functions/sendSocketMessage";
+import { pushChat, pushMessage, updateChats } from "../../redux/slices/ChatSlice";
 import { useAppDispatch, useAppSelector } from "../../utils/reduxHooks";
-
-interface SendMessageInterface {
-  message: string;
-  sender: string;
-  receiver: string;
-  type: "message" | "newUser";
-}
 
 export default function WriteMessage({ wsClient }: { wsClient: WebSocket }) {
   const chatter = useAppSelector((state) => state.chat);
@@ -14,34 +8,39 @@ export default function WriteMessage({ wsClient }: { wsClient: WebSocket }) {
   const primaryChatter = chatter.primaryChatter;
   const secondaryChatter = chatter.secondaryChatter;
 
-  function SendMessage(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+  function SendMessage(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Enter") {
       event.preventDefault();
-      const text = event.currentTarget.value;
-      wsClient.send(
-        JSON.stringify({
-          message: text,
-          type: "message",
+      if (event.currentTarget.value.length < 1) return;
+      try {
+        const text = event.currentTarget.value;
+        console.log(text === "");
+        const nextBlob = new Blob([text]);
+        dispatch(pushMessage([{ message: text, isReceiver: false }]));
+        sendSocketMessage({
           sender: primaryChatter,
           receiver: secondaryChatter,
-        })
-      );
-      dispatch(updateChats({ message: text, isReceiver: false }));
-      event.currentTarget.value=""
+          type: "message",
+          wsClient: wsClient,
+          data: nextBlob,
+        });
+        event.currentTarget.value = "";
+      } catch (error) {
+        console.log("error is ", error);
+      }
     } else {
       return;
     }
   }
 
   return (
-    <form className="absolute bottom-0 w-full gap-5 h-16 flex items-center px-2">
+    <form className="w-full gap-5 h-16 flex items-center px-2">
       <button>
         {/* <Icon name="Plus" className="bg-blue-600 p-2 rounded-full" /> */}
       </button>
-      <textarea
+      <input
         className="flex-1 bg-gray-700 px-5 rounded-full py-3"
         name="message"
-        rows={1}
         onKeyDown={SendMessage}
         placeholder="Write your Message"
         autoFocus

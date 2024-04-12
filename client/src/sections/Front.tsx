@@ -1,7 +1,28 @@
 import Chat from "../components/ChatBox";
 import Friends from "../components/Friends";
-
-export default function Front() {
+import Ringtone from "../assets/ringtone.mp3";
+import { useEffect, useMemo } from "react";
+import { useAppSelector } from "../../utils/reduxHooks";
+export default function Front({wsClient}:{wsClient:WebSocket}) {
+  const audio = useMemo(() => new Audio(Ringtone), []);
+  const callStatus = useAppSelector((state) => state.call.callStatus);
+  useEffect(() => {
+    function handleAudio() {
+      if (callStatus === "incoming") {
+        audio.play();
+      } else if (
+        callStatus === "rejected" ||
+        callStatus === "close" ||
+        callStatus === "ended" ||
+        callStatus === "ongoing"
+      ) {
+        audio.pause();
+      } else {
+        null;
+      }
+    }
+    handleAudio();
+  }, [callStatus, audio]);
 
   return (
     <main className="flex">
@@ -9,7 +30,7 @@ export default function Front() {
         <Friends />
       </div>
       <div className="w-[70%]">
-        <Chat />
+        <Chat wsClient={wsClient}/>
         {/* <Video/> */}
       </div>
     </main>

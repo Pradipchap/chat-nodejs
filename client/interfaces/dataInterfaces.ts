@@ -27,3 +27,19 @@ export interface MessageInterface {
   time?: Date;
   isReceiver: boolean;
 }
+
+export interface DetailsObjectInterface {
+  type:
+    | "newUser"
+    | "message"
+    | "callGoi"
+    | "callInc"
+    | "callEnd"
+    | "callReq"
+    | "callRej"
+    | "callAcc"
+    | "callTmo"
+    | "getMess";
+  sender: string;
+  receiver: string;
+}

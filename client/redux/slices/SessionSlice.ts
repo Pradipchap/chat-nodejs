@@ -1,11 +1,20 @@
 import { LoginResult } from "./../../interfaces/dataInterfaces";
 import { PayloadAction, createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import getProjectCookieValue from "../../functions/getCookieValue";
+import { fetchChatters } from "./UsersSlice";
+import { updatePrimaryChatter } from "./ChatSlice";
 
-export const fetchSessionData = createAsyncThunk("session", async () => {
-  const loginResult = getProjectCookieValue();
-  return loginResult;
-});
+export const fetchSessionData = createAsyncThunk(
+  "session",
+  async (_, { dispatch }) => {
+    const loginResult = getProjectCookieValue();
+    if (loginResult) {
+      dispatch(fetchChatters(loginResult?.userID));
+      dispatch(updatePrimaryChatter(loginResult.userID));
+    }
+    return loginResult;
+  }
+);
 
 const CURRENT_USER_SLICE = createSlice({
   name: "currentUser",

@@ -8,7 +8,7 @@ import { useNavigate } from "react-router-dom";
 import getFormElementValues from "../../functions/getFormElementValues";
 import { SERVER_BASE_URL } from "../../utils/constants";
 import { useAppDispatch } from "../../utils/reduxHooks";
-import { fetchSessionData, updateCurrentUser } from "../../redux/slices/SessionSlice";
+import { fetchSessionData } from "../../redux/slices/SessionSlice";
 
 export default function Login() {
   const dispatch = useAppDispatch();
