@@ -1,19 +1,23 @@
-
 const jwt=require("jsonwebtoken")
 
 function authenticate(req,res,next){
+console.log("authencate",req)
 const token=req.headers["authorization"].split(" ")[1]
+console.log("token is",token)
 if(!token){
 	res.status(401).json({error:"access denied"})
 }
 try{
+	console.log("token",token)
 	const isCorrect=jwt.verify(token,process.env.JWT_SECRET);
-	req.body.email=isCorrect.email;
+	console.log("iscorrect",isCorrect)
+	req.body.userID=isCorrect.userID;
 	next();
 }
 catch (error){
+	console.log("error is",error)
 	res.status(401).json({error:{
-		errormessage:"access denied"
+		errormessage:error
 	}})
 }
 }

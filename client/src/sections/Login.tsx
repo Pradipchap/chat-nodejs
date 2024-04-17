@@ -9,6 +9,7 @@ import getFormElementValues from "../../functions/getFormElementValues";
 import { SERVER_BASE_URL } from "../../utils/constants";
 import { useAppDispatch } from "../../utils/reduxHooks";
 import { fetchSessionData } from "../../redux/slices/SessionSlice";
+import setCookie from "../../functions/setCookie";
 
 export default function Login() {
   const dispatch = useAppDispatch();
@@ -30,9 +31,7 @@ export default function Login() {
       const result = await response.json();
       if (await response.ok) {
         showSuccess("User successfully created");
-        document.cookie = `chatAppDetails=${JSON.stringify(
-          result
-        )};max-age=86400`;
+        setCookie("chatAppDetails", JSON.stringify(result), 1);
         dispatch(fetchSessionData());
         navigate("/");
       } else {

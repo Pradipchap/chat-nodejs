@@ -13,7 +13,6 @@ import {
   faUserGroup,
   faChevronRight,
   faChevronLeft,
-  faCircleLeft,
   faFolder,
   faFile,
   faEllipsisVertical,
@@ -26,6 +25,8 @@ import {
   faBookOpen,
   faPencilSquare,
   faPhone,
+  faLeftLong,
+  faGear,
 } from "@fortawesome/free-solid-svg-icons";
 import { faSpinner, faQuestion } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -87,10 +88,24 @@ export default function Icon({ name, className = "" }: IconProps) {
           className={classNames("text-black text-lg", className)}
         />
       );
+    // case "Users":
+    //   return (
+    //     <FontAwesomeIcon
+    //       icon={faUsers}
+    //       className={classNames("text-black text-lg", className)}
+    //     />
+    //   );
     case "Calendar":
       return (
         <FontAwesomeIcon
           icon={faCalendarDays}
+          className={classNames("text-black text-lg", className)}
+        />
+      );
+    case "Setting":
+      return (
+        <FontAwesomeIcon
+          icon={faGear}
           className={classNames("text-black text-lg", className)}
         />
       );
@@ -195,7 +210,7 @@ export default function Icon({ name, className = "" }: IconProps) {
     case "Back":
       return (
         <FontAwesomeIcon
-          icon={faCircleLeft}
+          icon={faLeftLong}
           className={classNames("text-lg text-black", className)}
         />
       );

@@ -8,6 +8,10 @@ import AuthenticatedRoute from "./AuthenticatedRoute.tsx";
 import VideoComponent from "./components/VideoComponent.tsx";
 import { useMemo } from "react";
 import Map from "./sections/Map.tsx";
+import Friends from "./sections/Friends.tsx";
+import UserCard from "./components/UserCard.tsx";
+import FriendsGroup from "./sections/FriendsGroup.tsx";
+import AddFriends from "./sections/AddFriends.tsx";
 
 function App() {
   const wsClient = useMemo(() => new WebSocket(`ws://localhost:3100`), []);
@@ -27,6 +31,20 @@ function App() {
     },
     { path: "/register", element: <Signup /> },
     { path: "/map", element: <Map /> },
+    {
+      path: "/friends",
+      element: <Friends />,
+      children: [
+        {
+          path: "allfriends",
+          element: <FriendsGroup />,
+        },
+        {
+          path: "addFriends",
+          element: <AddFriends />,
+        },
+      ],
+    },
   ]);
   return (
     <ReduxProvider>

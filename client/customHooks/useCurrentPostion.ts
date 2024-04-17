@@ -12,7 +12,7 @@ const useGetLocaion = (setPosition) => {
     }
     function error(error) {}
 
-    navigator.geolocation.getCurrentPosition(success, error);
+    navigator.geolocation.watchPosition(success, error);
   }, []);
 
   return {

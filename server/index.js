@@ -90,9 +90,9 @@ async function handleMessage(message, connectionId, connection) {
       const documentID =
       sender < receiver ? sender + receiver : receiver + sender;
     const doesConversationExists = await Convo.exists({users:documentID})
-    if(!doesConversationExists){
-      await Convo.create({users:documentID})
-    }
+    // if(!doesConversationExists){
+    //   await Convo.create({users:documentID})
+    // }
     await Convo.updateOne({users:documentID},{$push:{messages:{message:messageString,sender}}})
       break;
     }

@@ -11,6 +11,8 @@ const sendMail = require("./mailsender");
 const ErrorCodes = require("../constants");
 const cookieParser = require("cookie-parser");
 const { randomUUID } = require("crypto");
+const Friends = require("../models/FriendsModel");
+const FriendRequests = require("../models/FriendRequests");
 
 router.use(cookieParser());
 
@@ -32,7 +34,39 @@ router.get("/users", async(req, res) => {
   }
 });
 
+router.post("/sendFriendRequest",authenticate,async(req,res)=>{
+  console.log("first");
+  const userID=req.body.userID;
+  const friendUserID=req.body.friendID
+  console.log("req body is",req.body)
+  try {
+    await connectToDB();
+    const response=await FriendRequests.updateOne({userID:friendUserID},{$push:{friendRequests:{userID}}})
+    // console.log(response)
+    return res.json({message:"Friend Requests Sent"})
+  } catch (error) {
+    res.status(500).json({
+      error:{
+        errorMessage:error,
+      }
+    })
+  }
+})
 
+router.get("/friends",async(req,res)=>{
+  try {
+    const userID=req.params.userID;
+    await connectToDB()
+    const friends=await Friends.find({userID}).populate("User")
+    console.log("friends",friends)
+  } catch (error) {
+    res.status(500).json({
+      error:{
+        errorMessage:error,
+      }
+    })
+  }
+})
 
 router.get("/users/search", async(req, res) => {
   try {
@@ -97,6 +131,7 @@ router.post("/register", async (req, res) => {
       email,
       websocketId
     });
+    await FriendRequests.create({userID:newUser._id})
     const newUserCredentials = await UserCredentials.create({
       email,
       password: hashedPassword,
@@ -140,8 +175,8 @@ router.post("/login", async (req, res) => {
       userDetail.password
     );
     if (isPasswordCorrect) {
-      const token = jwt.sign({ email: email }, process.env.JWT_SECRET, {
-        expiresIn: "86400",
+      const token = jwt.sign({ userID: userDetail.user._id }, process.env.JWT_SECRET, {
+        expiresIn: 86400,
       });
       res.status(200);
       res.cookie("accessToken",token,{maxAge:86400})
