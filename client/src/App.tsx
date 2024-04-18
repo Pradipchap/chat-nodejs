@@ -6,13 +6,16 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Signup from "./sections/Signup.tsx";
 import AuthenticatedRoute from "./AuthenticatedRoute.tsx";
 import VideoComponent from "./components/VideoComponent.tsx";
-import { useMemo } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import Map from "./sections/Map.tsx";
 import Friends from "./sections/Friends.tsx";
-import UserCard from "./components/UserCard.tsx";
 import FriendsGroup from "./sections/FriendsGroup.tsx";
-import AddFriends from "./sections/AddFriends.tsx";
+import Loading from "./components/Loading.tsx";
 
+const AddFriends = lazy(async () => import(".//sections/AddFriends.tsx"));
+const FriendRequests = lazy(async () =>
+  import("./sections/FriendRequests.tsx")
+);
 function App() {
   const wsClient = useMemo(() => new WebSocket(`ws://localhost:3100`), []);
 
@@ -41,7 +44,19 @@ function App() {
         },
         {
           path: "addFriends",
-          element: <AddFriends />,
+          element: (
+            <Suspense fallback={<Loading />}>
+              <AddFriends />
+            </Suspense>
+          ),
+        },
+        {
+          path: "friendRequests",
+          element: (
+            <Suspense fallback={<Loading />}>
+              <FriendRequests />
+            </Suspense>
+          ),
         },
       ],
     },

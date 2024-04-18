@@ -2,13 +2,15 @@ import { Outlet, useNavigate } from "react-router-dom";
 import Button from "../components/Button";
 
 import Loginstatus from "../components/Loginstatus";
+import SearchFriends from "../components/Inputs/SearchFriends";
 export default function Friends() {
   return (
     <main className="flex">
       <div className="w-[20%] bg-blue-950 border-r border-blue-900">
         <Navigation />
       </div>
-      <div className="w-[80%]">
+      <div className="w-[80%] flex flex-col gap-10">
+        <SearchFriends />
         <Outlet />
       </div>
     </main>
@@ -17,7 +19,7 @@ export default function Friends() {
 
 const NavigationItems = [
   { name: "Friends", url: "friends" },
-  { name: "Friend Request", url: "requests" },
+  { name: "Friend Request", url: "friendRequests" },
   { name: "Add friends", url: "addFriends" },
 ];
 function Navigation() {

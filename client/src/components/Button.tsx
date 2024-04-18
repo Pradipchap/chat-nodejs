@@ -10,7 +10,6 @@ export default function Button(props: ButtonProps) {
     variant = "primary",
     iconAlignment = "left",
     children,
-    isLoading = false,
     ...rest
   } = props;
 
@@ -23,16 +22,13 @@ export default function Button(props: ButtonProps) {
   );
 
   return (
-    <button {...rest} className={buttonClasses} disabled={isLoading}>
+    <button {...rest} className={buttonClasses}>
       {icon && iconAlignment === "left" && (
         <span className="mr-1">
           <Icon name={icon} className={iconClassName} />
         </span>
       )}
       {children}{" "}
-      {isLoading && (
-        <Icon name="Loading" className="ml-2 animate-spin text-white" />
-      )}
       {icon && iconAlignment === "right" && (
         <span className="ml-1">
           <Icon name={icon} className={iconClassName} />

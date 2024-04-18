@@ -7,6 +7,8 @@ import { SERVER_BASE_URL } from "../../utils/constants";
 import { updateSecondaryChatter } from "./ChatSlice";
 interface users {
   users: FriendBoxInterface[];
+  FriendRequests: FriendBoxInterface[];
+  Friends: FriendBoxInterface[];
   loading: boolean;
   error: boolean;
 }
@@ -30,11 +32,23 @@ export const fetchChatters = createAsyncThunk(
 
 const USER_SLICE = createSlice({
   name: "users",
-  initialState: <users>{ users: [], loading: true, error: false },
+  initialState: <users>{
+    users: [],
+    loading: true,
+    error: false,
+    FriendRequests: [],
+    Friends: [],
+  },
   reducers: {
     updateUsers: (state, action) => {
       state.users = action.payload;
       state.loading = false;
+    },
+    updateFriends: (state, action) => {
+      state.Friends = action.payload;
+    },
+    updateFriendRequests: (state, action) => {
+      state.FriendRequests = action.payload;
     },
     setLoading: (state, action) => {
       state.loading = action.payload;
@@ -52,5 +66,5 @@ const USER_SLICE = createSlice({
   },
 });
 
-export const { updateUsers, setLoading, setError } = USER_SLICE.actions;
+export const { updateUsers, setLoading, setError,updateFriends,updateFriendRequests } = USER_SLICE.actions;
 export default USER_SLICE.reducer;

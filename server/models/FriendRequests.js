@@ -1,15 +1,11 @@
 const { Schema, models, model } =require( "mongoose")
 
-const EachFriendSchema=new Schema({
-	userID:{type:Schema.Types.ObjectId,ref:"User",required:["true"],unique: [true, "email already exists!!"],},
-})
-
 const FriendRequestsSchema = new Schema({
   userID:{
 		type:Schema.Types.ObjectId,
 		ref:"User"
 	},
-	friendRequests:[EachFriendSchema]
+	friendRequests:[{ type: Schema.Types.ObjectId, ref: "User" }]
 });
 
 const FriendRequests = models.FriendRequests || model("FriendRequests", FriendRequestsSchema);

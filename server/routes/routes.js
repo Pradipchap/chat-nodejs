@@ -41,10 +41,29 @@ router.post("/sendFriendRequest",authenticate,async(req,res)=>{
   console.log("req body is",req.body)
   try {
     await connectToDB();
-    const response=await FriendRequests.updateOne({userID:friendUserID},{$push:{friendRequests:{userID}}})
-    // console.log(response)
+    const response=await FriendRequests.updateOne({userID:friendUserID},{$addToSet:{friendRequests:userID}})
     return res.json({message:"Friend Requests Sent"})
   } catch (error) {
+    res.status(500).json({
+      error:{
+        errorMessage:error,
+      }
+    })
+  }
+})
+
+router.post("/getFriendRequests",authenticate,async(req,res)=>{
+  const userID=req.body.userID;
+  const pageNo=req.body.pageNo||0
+  console.log("req body is",userID)
+  try {
+    await connectToDB();
+    const requests=await FriendRequests.findOne({userID},{friendRequests:{$slice:10}}).populate({path:"friendRequests"});
+    const finalUsers=await requests.friendRequests;
+    console.log("requests are",requests)
+    return res.json({friendRequests:finalUsers})
+  } catch (error) {
+    console.log(error)
     res.status(500).json({
       error:{
         errorMessage:error,
@@ -131,13 +150,14 @@ router.post("/register", async (req, res) => {
       email,
       websocketId
     });
-    await FriendRequests.create({userID:newUser._id})
+    console.log("user id",newUser._id)
     const newUserCredentials = await UserCredentials.create({
       email,
       password: hashedPassword,
       user: newUser._id,
       code: hashedCode,
     });
+    await FriendRequests.create({userID:newUser._id,friendRequests:[]})
     res.send(JSON.stringify(newUser));
     return ;
   } catch (error) {
