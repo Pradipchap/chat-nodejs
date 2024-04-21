@@ -26,7 +26,7 @@ function StatusButton({
       ? {
           iconName: "Loading",
           name: loadingMessage,
-          iconClassName: "animation-spin text-white",
+          iconClassName: "animate-spin text-white",
           className: "bg-yellow-700",
         }
       : requestStatus === SUBMIT_STATUS.SUCCESS
@@ -58,7 +58,7 @@ function StatusButton({
       className={classNames("gap-2 w-full min-w-44", data.className)}
       onClick={onClick}
     >
-      {requestStatus}
+      {data.name}
     </Button>
   );
 }

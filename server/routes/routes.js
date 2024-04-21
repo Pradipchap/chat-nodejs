@@ -13,84 +13,285 @@ const cookieParser = require("cookie-parser");
 const { randomUUID } = require("crypto");
 const Friends = require("../models/FriendsModel");
 const FriendRequests = require("../models/FriendRequests");
+const getCombinedId = require("../utils/getCombinedId");
+const { ObjectId } = require("mongodb");
 
 router.use(cookieParser());
 
-router.get("/users", async(req, res) => {
+router.post("/users", authenticate,async (req, res) => {
   try {
+    const userID=req.body.userID;
+    const pageNo=(req.query.pageNo||1)-1;
+    const limitingNumber=10;
     await connectToDB();
-    const users=await User.find({});
+    const noOfUsers=await User.estimatedDocumentCount()
+    console.log("no of users",noOfUsers)
+    const users = await User.find({_id:{$ne:new ObjectId(userID)}}).limit(limitingNumber).skip(pageNo*limitingNumber);
     res.status(200).json({
       users,
-      noOfUser:users.length
-    })
-    
+      noOfUsers:noOfUsers-1,
+    });
   } catch (error) {
     res.status(200).json({
-      error:{
-        errorMessage:error,
-      }
-    })
+      error: {
+        errorMessage: error,
+      },
+    });
   }
 });
 
-router.post("/sendFriendRequest",authenticate,async(req,res)=>{
+router.post("/user",authenticate, async (req, res) => {
+  const requestUserID=req.query.userID;
+  const userID=req.body.userID;
+  try {
+    await connectToDB();
+
+    const isFriend = await Friends.findOne({userID,"friends.userID": requestUserID},{
+      'friends.$': 1
+    }).populate({path:"friends.userID"})
+    if(isFriend){
+      return res.status(200).json(
+        {isFriend:true,hasIGotRequest:false,hasISentRequest:false,userDetails:isFriend.friends[0].userID}
+      );
+      return;
+    }
+    const hasIGotRequest=await FriendRequests.findOne({userID,"friendRequests":requestUserID},{
+      'friendRequests.$': 1
+    }).populate({path:"friendRequests"});
+    if(hasIGotRequest){
+      return res.status(200).json(
+        {isFriend:false,hasIGotRequest:true,hasISentRequest:false,userDetails:hasIGotRequest.friendRequests[0]}
+      );
+      return;
+    }
+    const hasISentRequest=await FriendRequests.findOne({userID:requestUserID,"friendRequests":userID},{
+      'friendRequests.$': 1
+    }).populate('userID');
+    if(hasISentRequest){
+      return res.status(200).json(
+        {isFriend:false,hasIGotRequest:false,hasISentRequest:true,userDetails:hasISentRequest.userID}
+      );
+      return;
+    }
+    const userDetails=await User.findById(requestUserID)
+    return res.status(200).json(
+      {isFriend:false,userDetails,hasIGotRequest:false,hasISentRequest:false,}
+    );
+    return;
+
+    
+  } catch (error) {
+    res.status(500).json({
+      error: {
+        errorMessage: error,
+      },
+    });
+  }
+});
+
+router.post("/sendFriendRequest", authenticate, async (req, res) => {
   console.log("first");
-  const userID=req.body.userID;
-  const friendUserID=req.body.friendID
-  console.log("req body is",req.body)
+  const userID = req.body.userID;
+  const friendUserID = req.body.friendID;
+  console.log("req body is", req.body);
   try {
     await connectToDB();
-    const response=await FriendRequests.updateOne({userID:friendUserID},{$addToSet:{friendRequests:userID}})
-    return res.json({message:"Friend Requests Sent"})
+    const response = await FriendRequests.updateOne(
+      { userID: friendUserID },
+      { $addToSet: { friendRequests: userID } }
+    );
+    return res.json({ message: "Friend Requests Sent" });
   } catch (error) {
     res.status(500).json({
-      error:{
-        errorMessage:error,
-      }
-    })
+      error: {
+        errorMessage: error,
+      },
+    });
   }
-})
+});
 
-router.post("/getFriendRequests",authenticate,async(req,res)=>{
-  const userID=req.body.userID;
-  const pageNo=req.body.pageNo||0
-  console.log("req body is",userID)
+router.post("/confirmRequest", authenticate, async (req, res) => {
+  const userID = req.body.userID;
+  const requestID = req.body.requestID;
+  console.log("asd", userID, requestID);
+  const combinedID = getCombinedId(userID, requestID);
+
+  try {
+    await Friends.updateOne(
+      { userID ,"friends.userID": { $ne: requestID} },
+      { $addToSet: { friends: { userID: requestID, convoID: combinedID } } }
+    );
+    await Friends.updateOne(
+      { userID: requestID,"friends.userID": { $ne: userID } },
+      { $addToSet: { friends: { userID, convoID: combinedID } } }
+    );
+    await FriendRequests.updateOne(
+      { userID },
+      { $pull: { friendRequests: requestID } }
+    );
+    return res.json({});
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error: {
+        errorMessage: error,
+      },
+    });
+  }
+});
+router.post("/deleteRequest", authenticate, async (req, res) => {
+  const userID = req.body.userID;
+  const requestID = req.body.requestID;
+  console.log("asd", userID, requestID);
+  const combinedID = getCombinedId(userID, requestID);
+
+  try {
+    await FriendRequests.updateOne(
+      { userID },
+      { $pull: { friendRequests: requestID } }
+    );
+    return res.json({});
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error: {
+        errorMessage: error,
+      },
+    });
+  }
+});
+router.post("/unsendRequest", authenticate, async (req, res) => {
+  const userID = req.body.userID;
+  const requestID = req.body.requestID;
+  try {
+    await FriendRequests.updateOne(
+      { userID:requestID },
+      { $pull: { friendRequests: userID } }
+    );
+    return res.json({});
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error: {
+        errorMessage: error,
+      },
+    });
+  }
+});
+
+router.post("/getFriendRequests", authenticate, async (req, res) => {
+  const userID = req.body.userID;
+  const pageNo=(req.query.pageNo||1)-1;
+  const limitingNumber=10;
+  console.log("req body is", userID);
   try {
     await connectToDB();
-    const requests=await FriendRequests.findOne({userID},{friendRequests:{$slice:10}}).populate({path:"friendRequests"});
-    const finalUsers=await requests.friendRequests;
-    console.log("requests are",requests)
-    return res.json({friendRequests:finalUsers})
-  } catch (error) {
-    console.log(error)
-    res.status(500).json({
-      error:{
-        errorMessage:error,
+    const result=await FriendRequests.aggregate([
+      {$match:{userID:new ObjectId(userID)}},
+      {$project:{totalFriendRequests:{$size:"$friendRequests"},friendRequests: { $slice: ["$friendRequests", pageNo * 10, 10] }}},
+      {
+        $lookup: {
+          from: "users",
+          localField: "friendRequests",
+          foreignField: "_id",
+          as: "populatedFriendRequests"
+        }
+      },
+      {
+        $addFields: {
+          "friendRequests": [{ $arrayElemAt: ["$populatedFriendRequests", 0] }]
+        }
+      },
+      {
+        $project: {
+          "friendRequests.userID": 0,
+          populatedFriendRequests: 0
+        }
       }
-    })
-  }
-})
 
-router.get("/friends",async(req,res)=>{
+    ])
+    return res.json({ users: result[0].friendRequests ,noOfUser:result[0].totalFriendRequests});
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({
+      error: {
+        errorMessage: error,
+      },
+    });
+  }
+});
+
+router.post("/friends", authenticate, async (req, res) => {
   try {
-    const userID=req.params.userID;
-    await connectToDB()
-    const friends=await Friends.find({userID}).populate("User")
-    console.log("friends",friends)
+    const userID = req.body.userID;
+    console.log("user ID is",userID)
+    const pageNo=(req.query.pageNo||1)-1;
+    const limitingNumber=10;
+    await connectToDB();
+    const result=await Friends.aggregate([
+      {$match:{userID:new ObjectId(userID)}},
+      {$project:{totalFriends:{$size:"$friends"},friends: { $slice: ["$friends", pageNo * 10, 10] }}},
+      {
+        $lookup: {
+          from: "users",
+          localField: "friends.userID",
+          foreignField: "_id",
+          as: "populatedFriends"
+        }
+      },
+      {
+        $addFields: {
+          "friends": [{ $arrayElemAt: ["$populatedFriends", 0] }]
+        }
+      },
+      {
+        $project: {
+          "friends.userID": 0,
+          "friends._id": 0,
+          populatedFriends: 0
+        }
+      }
+
+    ])
+    return res.json({ users: result[0].friends,noOfUsers:result[0].totalFriends});
   } catch (error) {
     res.status(500).json({
-      error:{
-        errorMessage:error,
-      }
-    })
+      error: {
+        errorMessage: error,
+      },
+    });
   }
-})
+});
 
-router.get("/users/search", async(req, res) => {
+router.post("/deleteFriend", authenticate, async (req, res) => {
   try {
-    const searchString=req.query.searchString
-    console.log("params",searchString)
+    const userID = req.body.userID;
+    const friendID = req.body.friendID;
+    await connectToDB();
+    await Friends.updateOne(
+      { userID },
+      { $pull: { friends: {userID:friendID} }}
+    );
+    await Friends.updateOne(
+      { userID:friendID },
+      { $pull: { friends: {userID:userID}} }
+    );
+    return res.status(200).json({ message:"success" });
+  } catch (error) {
+    res.status(500).json({
+      error: {
+        errorMessage: error,
+      },
+    });
+  }
+});
+
+router.post("/users/search", authenticate,async (req, res) => {
+  try {
+    const userID=req.body.userID
+    console.log("userasdf",userID)
+    const searchString = req.body.searchString;
+    console.log("params", searchString);
     await connectToDB();
     const pipeline = [
       {
@@ -98,46 +299,51 @@ router.get("/users/search", async(req, res) => {
           index: "usersSearch",
           autocomplete: {
             query: searchString,
-            path:"username"
-          }
+            path: "username",
+          },
+        },
+      },
+      {
+        $match: {
+          _id: { $ne: new ObjectId(userID) }
         }
-      }
-    ]
-    const users=await User.aggregate(pipeline).limit(10)
+      },
+    ];
+    const users = await User.aggregate(pipeline).limit(10);
+    console.log("users are",users)
     res.status(200).json({
       users,
-      noOfUser:users.length
-    })
-    
+      noOfUser: users.length,
+    });
   } catch (error) {
     res.status(200).json({
-      error:{
-        errorMessage:error,
-      }
-    })
+      error: {
+        errorMessage: error,
+      },
+    });
   }
 });
 
 router.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
-  console.log("body",username,email,password)
+  console.log("body", username, email, password);
   try {
-    const websocketId=randomUUID()
+    const websocketId = randomUUID();
     await connectToDB();
-    const doesUserExists=await User.exists({email})
-    console.log("does user exists",doesUserExists)
-    if(doesUserExists!==null){
+    const doesUserExists = await User.exists({ email });
+    console.log("does user exists", doesUserExists);
+    if (doesUserExists !== null) {
       res.status(403);
-    res.json({
-      error: {
-        errorMessage: "User already exists",
-        errorCOde:ErrorCodes.USER_EXISTS
-      }
-    });
-    return;
-  }
+      res.json({
+        error: {
+          errorMessage: "User already exists",
+          errorCOde: ErrorCodes.USER_EXISTS,
+        },
+      });
+      return;
+    }
     const hashedPassword = await bcrypt.hash(password, 10);
-    const verificationCode = Math.ceil(Math.random() * 1000000);
+    const verificationCode = Math.ceil((Math.random() + 0.1) * 1000000);
     const hashedCode = await bcrypt.hash(verificationCode.toString(), 10);
 
     await sendMail({
@@ -148,25 +354,25 @@ router.post("/register", async (req, res) => {
     const newUser = await User.create({
       username,
       email,
-      websocketId
+      websocketId,
     });
-    console.log("user id",newUser._id)
+    console.log("user id", newUser._id);
     const newUserCredentials = await UserCredentials.create({
       email,
       password: hashedPassword,
       user: newUser._id,
       code: hashedCode,
     });
-    await FriendRequests.create({userID:newUser._id,friendRequests:[]})
+    await Friends.create({ userID: newUser._id, friends: [] });
+    await FriendRequests.create({ userID: newUser._id, friendRequests: [] });
     res.send(JSON.stringify(newUser));
-    return ;
+    return;
   } catch (error) {
     res.status(error.status || 500);
     res.json({
       error: {
         errorMessage: error.message || "something wrong happened",
       },
-      
     });
     return;
   }
@@ -176,7 +382,9 @@ router.post("/login", async (req, res) => {
   try {
     await connectToDB();
     const { email, password } = req.body;
-    const userDetail = await UserCredentials.findOne({ email }).populate("user");
+    const userDetail = await UserCredentials.findOne({ email }).populate(
+      "user"
+    );
     if (!userDetail) {
       throw new Error("User doesn't exists");
     }
@@ -195,17 +403,21 @@ router.post("/login", async (req, res) => {
       userDetail.password
     );
     if (isPasswordCorrect) {
-      const token = jwt.sign({ userID: userDetail.user._id }, process.env.JWT_SECRET, {
-        expiresIn: 86400,
-      });
+      const token = jwt.sign(
+        { userID: userDetail.user._id },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: 86400,
+        }
+      );
       res.status(200);
-      res.cookie("accessToken",token,{maxAge:86400})
+      res.cookie("accessToken", token, { maxAge: 86400 });
       res.json({
         accessToken: token,
-        email:userDetail.user.email,
-        username:userDetail.user.username,
-        userID:userDetail.user._id,
-        websockedId:userDetail.user.websockedId
+        email: userDetail.user.email,
+        username: userDetail.user.username,
+        userID: userDetail.user._id,
+        websockedId: userDetail.user.websockedId,
       });
       return;
     } else {

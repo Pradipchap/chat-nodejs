@@ -10,7 +10,7 @@ interface props {
   image?: string;
 }
 
-export default function SendRequestCard({ userID, username }: props) {
+export default function SendRequestCard({ userID, username,email }: props) {
   const currentUser = useAppSelector((state) => state.currentUser);
   const [requestStatus, setrequestStatus] = useState<SUBMIT_STATUS>(
     SUBMIT_STATUS.IDLE
@@ -20,7 +20,7 @@ export default function SendRequestCard({ userID, username }: props) {
       console.log("");
       const requestData = { friendID: userID };
       setrequestStatus(SUBMIT_STATUS.LOADING);
-      const response = await fetch(SERVER_BASE_URL + "/api/getFriendRequests", {
+      const response = await fetch(SERVER_BASE_URL + "/api/sendFriendRequest", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -50,7 +50,7 @@ export default function SendRequestCard({ userID, username }: props) {
           alt="Bonnie image"
         />
         <h5 className="mb-1 text-xl font-medium text-gray-900">{username}</h5>
-        <span className="text-sm text-gray-500">Visual Designer</span>
+        <span className="text-sm text-gray-500">{email}</span>
         <div className="flex mt-4 md:mt-6"></div>
         <StatusButton
           idleIcon="Plus"

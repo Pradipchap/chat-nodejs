@@ -27,6 +27,7 @@ import {
   faPhone,
   faLeftLong,
   faGear,
+  faMessage,
 } from "@fortawesome/free-solid-svg-icons";
 import { faSpinner, faQuestion } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -71,6 +72,13 @@ export default function Icon({ name, className = "" }: IconProps) {
       return (
         <FontAwesomeIcon
           icon={faXmark}
+          className={classNames("text-black text-lg", className)}
+        />
+      );
+      case "Message":
+      return (
+        <FontAwesomeIcon
+          icon={faMessage}
           className={classNames("text-black text-lg", className)}
         />
       );

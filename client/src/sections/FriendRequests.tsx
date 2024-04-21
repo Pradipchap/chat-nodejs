@@ -14,11 +14,11 @@ export default function FriendRequests() {
   const friendRequests = useAppSelector((state) => state.users.FriendRequests);
 
   return (
-    <div>
+    <div className="flex gap-5 p-2">
       {friendRequests.length > 0 &&
         friendRequests.map((item) => {
           return (
-            <SendRequestCard username={item.username} email={item.email} />
+            <SendRequestCard username={item.username} email={item.email} userID={item._id} />
           );
         })}
     </div>
@@ -30,12 +30,14 @@ function SendRequestCard({ userID, username }: props) {
   const [requestStatus, setrequestStatus] = useState<SUBMIT_STATUS>(
     SUBMIT_STATUS.IDLE
   );
+  const [requestStatusDelete, setrequestStatusDelete] = useState<SUBMIT_STATUS>(
+    SUBMIT_STATUS.IDLE
+  );
   async function acceptRequest() {
     try {
-      console.log("");
-      const requestData = { friendID: userID };
+      const requestData = { requestID: userID };
       setrequestStatus(SUBMIT_STATUS.LOADING);
-      const response = await fetch(SERVER_BASE_URL + "/api/confimRequest", {
+      const response = await fetch(SERVER_BASE_URL + "/api/confirmRequest?pageNo=", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -59,10 +61,9 @@ function SendRequestCard({ userID, username }: props) {
 
   async function deleteRequest() {
     try {
-      console.log("");
-      const requestData = { friendID: userID };
-      setrequestStatus(SUBMIT_STATUS.LOADING);
-      const response = await fetch(SERVER_BASE_URL + "/api/confimRequest", {
+      const requestData = { requestID: userID };
+      setrequestStatusDelete(SUBMIT_STATUS.LOADING);
+      const response = await fetch(SERVER_BASE_URL + "/api/deleteRequest", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -72,14 +73,14 @@ function SendRequestCard({ userID, username }: props) {
       });
       console.log("response", response);
       if (response.ok) {
-        setrequestStatus(SUBMIT_STATUS.SUCCESS);
+        setrequestStatusDelete(SUBMIT_STATUS.SUCCESS);
       } else {
         throw new Error();
       }
     } catch (error) {
-      setrequestStatus(SUBMIT_STATUS.FAILED);
+      setrequestStatusDelete(SUBMIT_STATUS.FAILED);
       setTimeout(() => {
-        setrequestStatus(SUBMIT_STATUS.IDLE);
+        setrequestStatusDelete(SUBMIT_STATUS.IDLE);
       }, 5000);
     }
   }
@@ -103,7 +104,7 @@ function SendRequestCard({ userID, username }: props) {
           <StatusButton
             idleIcon="Delete"
             className="bg-black"
-            requestStatus={requestStatus}
+            requestStatus={requestStatusDelete}
             onClick={deleteRequest}
             idleMessage="Delete Request"
             loadingMessage="Deleting"

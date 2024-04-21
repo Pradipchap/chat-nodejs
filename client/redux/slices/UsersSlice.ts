@@ -12,6 +12,7 @@ interface users {
   loading: boolean;
   error: boolean;
 }
+
 export const fetchChatters = createAsyncThunk(
   "users",
   async (primaryChatter: string, { dispatch }) => {
@@ -66,5 +67,11 @@ const USER_SLICE = createSlice({
   },
 });
 
-export const { updateUsers, setLoading, setError,updateFriends,updateFriendRequests } = USER_SLICE.actions;
+export const {
+  updateUsers,
+  setLoading,
+  setError,
+  updateFriends,
+  updateFriendRequests,
+} = USER_SLICE.actions;
 export default USER_SLICE.reducer;

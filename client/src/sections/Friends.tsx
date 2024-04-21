@@ -1,9 +1,78 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import Button from "../components/Button";
 
 import Loginstatus from "../components/Loginstatus";
 import SearchFriends from "../components/Inputs/SearchFriends";
+import { useAppDispatch, useAppSelector } from "../../utils/reduxHooks";
+import { useEffect, useState } from "react";
+import { SERVER_BASE_URL } from "../../utils/constants";
+import {
+  updateFriendRequests,
+  updateFriends,
+  updateUsers,
+} from "../../redux/slices/UsersSlice";
+import Pagination from "../components/Pagination";
+
+function getUrlValue(url: string) {
+  const strings = url.split("/");
+  return strings[2];
+}
+
 export default function Friends() {
+  const currentUser = useAppSelector((state) => state.currentUser);
+  const [pageNo, setPageNo] = useState(1);
+  const [totalData, setTotalData] = useState(0);
+  const pathname = useLocation();
+  const [currentPath, setcurrentPath] = useState(
+    getUrlValue(pathname.pathname)
+  );
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    setcurrentPath(getUrlValue(pathname.pathname));
+  }, [pathname.pathname]);
+
+  useEffect(() => {
+    async function getData() {
+      try {
+        const apiUrl =
+          currentPath === `addFriends`
+            ? `users`
+            : currentPath === "friendRequests"
+            ? `getFriendRequests`
+            : currentPath;
+        const response = await fetch(
+          SERVER_BASE_URL + "/api/" + `${apiUrl}?pageNo=${pageNo}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: "Bearer" + " " + currentUser.accessToken,
+            },
+          }
+        );
+        if (response.ok) {
+          const data = await response.json();
+          if (currentPath === "addFriends") {
+            dispatch(updateUsers(data.users));
+            setTotalData(data.noOfUsers);
+          } else if (currentPath === "friendRequests") {
+            dispatch(updateFriendRequests(data.users));
+            setTotalData(data.noOfUsers);
+          } else if (currentPath === "friends") {
+            console.log("first");
+            dispatch(updateFriends(data.users));
+            setTotalData(data.noOfUsers);
+          } else {
+            console.log("nothing");
+          }
+        }
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    getData();
+  }, [currentPath]);
   return (
     <main className="flex">
       <div className="w-[20%] bg-blue-950 border-r border-blue-900">
@@ -12,6 +81,14 @@ export default function Friends() {
       <div className="w-[80%] flex flex-col gap-10">
         <SearchFriends />
         <Outlet />
+        {totalData > 0 && (
+          <Pagination
+            currentPage={pageNo}
+            dataLength={totalData}
+            dataPerPage={10}
+            onPageChange={setPageNo}
+          />
+        )}
       </div>
     </main>
   );

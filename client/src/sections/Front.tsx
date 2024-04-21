@@ -3,7 +3,8 @@ import Friends from "../components/Friends";
 import Ringtone from "../assets/ringtone.mp3";
 import { useEffect, useMemo } from "react";
 import { useAppSelector } from "../../utils/reduxHooks";
-export default function Front({wsClient}:{wsClient:WebSocket}) {
+import { Outlet, useNavigate } from "react-router-dom";
+export default function Front({ wsClient }: { wsClient: WebSocket }) {
   const audio = useMemo(() => new Audio(Ringtone), []);
   const callStatus = useAppSelector((state) => state.call.callStatus);
   useEffect(() => {
@@ -31,6 +32,7 @@ export default function Front({wsClient}:{wsClient:WebSocket}) {
       </div>
       <div className="w-[70%]">
         <Chat wsClient={wsClient}/>
+        <Outlet />
         {/* <Video/> */}
       </div>
     </main>

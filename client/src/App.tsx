@@ -1,5 +1,4 @@
 import "./App.css";
-import ReduxProvider from "../redux/ReduxProvider";
 import Toast from "./components/Toast";
 import Login from "./sections/Login.tsx";
 import { createBrowserRouter, RouterProvider } from "react-router-dom";
@@ -11,6 +10,9 @@ import Map from "./sections/Map.tsx";
 import Friends from "./sections/Friends.tsx";
 import FriendsGroup from "./sections/FriendsGroup.tsx";
 import Loading from "./components/Loading.tsx";
+import UserProfile from "./sections/UserProfile.tsx";
+import { SERVER_BASE_URL } from "../utils/constants.ts";
+import { useAppSelector } from "../utils/reduxHooks.ts";
 
 const AddFriends = lazy(async () => import(".//sections/AddFriends.tsx"));
 const FriendRequests = lazy(async () =>
@@ -18,7 +20,7 @@ const FriendRequests = lazy(async () =>
 );
 function App() {
   const wsClient = useMemo(() => new WebSocket(`ws://localhost:3100`), []);
-
+  const accessToken = useAppSelector((state) => state.currentUser.accessToken);
   const router = createBrowserRouter([
     {
       path: "/",
@@ -39,7 +41,7 @@ function App() {
       element: <Friends />,
       children: [
         {
-          path: "allfriends",
+          path: "friends",
           element: <FriendsGroup />,
         },
         {
@@ -58,14 +60,30 @@ function App() {
             </Suspense>
           ),
         },
+        {
+          path: "userProfile/:userID",
+          element: <UserProfile />,
+          loader: async ({ request, params }) => {
+            return fetch(
+              `${SERVER_BASE_URL}/api/user?userID=${params.userID}`,
+              {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                },
+                signal: request.signal,
+              }
+            );
+          },
+        },
       ],
     },
   ]);
   return (
-    <ReduxProvider>
+    <>
       <Toast />
       <RouterProvider router={router} />
-    </ReduxProvider>
+    </>
   );
 }
 
