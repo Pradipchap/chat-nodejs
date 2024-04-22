@@ -1,9 +1,11 @@
 import FriendBox from "./FriendBox";
-import { FriendBoxInterface } from "../../interfaces/dataInterfaces";
+import {
+  ChatterInterface,
+} from "../../interfaces/dataInterfaces";
 import { useAppSelector } from "../../utils/reduxHooks";
 
 export default function FriendList() {
-  const users = useAppSelector((state) => state.users.users);
+  const users = useAppSelector((state) => state.users.chatters);
   const loading = useAppSelector((state) => state.users.loading);
   const error = useAppSelector((state) => state.users.error);
 
@@ -18,17 +20,8 @@ export default function FriendList() {
         {users.length === 0 ? (
           <p>No users</p>
         ) : (
-          users.map((element: FriendBoxInterface) => {
-            return (
-              <FriendBox
-                key={element.username}
-                username={element.username}
-                _id={element._id}
-                dateofbirth={element.dateofbirth}
-                email={element.email}
-                image={element.image}
-              />
-            );
+          users.map((element: ChatterInterface) => {
+            return <FriendBox {...element} />;
           })
         )}
       </div>

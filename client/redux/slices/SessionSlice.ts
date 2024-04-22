@@ -9,7 +9,11 @@ export const fetchSessionData = createAsyncThunk(
   async (_, { dispatch }) => {
     const loginResult = getProjectCookieValue();
     if (loginResult) {
-      dispatch(fetchChatters(loginResult?.userID));
+      dispatch(
+        fetchChatters({
+          accessToken: loginResult?.accessToken,
+        })
+      );
       dispatch(updatePrimaryChatter(loginResult.userID));
     }
     return loginResult;

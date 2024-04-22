@@ -1,4 +1,5 @@
 import {
+  ChatterInterface,
   FriendBoxInterface,
   UserFetchResults,
 } from "../../interfaces/dataInterfaces";
@@ -7,13 +8,14 @@ import { SERVER_BASE_URL } from "../../utils/constants";
 import { updateSecondaryChatter } from "./ChatSlice";
 interface users {
   users: FriendBoxInterface[];
+  chatters:ChatterInterface [];
   FriendRequests: FriendBoxInterface[];
   Friends: FriendBoxInterface[];
   loading: boolean;
   error: boolean;
 }
 
-export const fetchChatters = createAsyncThunk(
+export const fetchUsers = createAsyncThunk(
   "users",
   async (primaryChatter: string, { dispatch }) => {
     try {
@@ -31,10 +33,32 @@ export const fetchChatters = createAsyncThunk(
   }
 );
 
+export const fetchChatters = createAsyncThunk(
+  "chatters",
+  async ({ accessToken }: { accessToken: string }, { dispatch }) => {
+    try {
+      const response = await fetch(`${SERVER_BASE_URL}/api/chatters`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer" + " " + accessToken,
+        },
+      });
+      const results = await response.json();
+      dispatch(updateChatters(results.users));
+      return results.users;
+    } catch (error) {
+      console.log(error);
+      return [];
+    }
+  }
+);
+
 const USER_SLICE = createSlice({
   name: "users",
   initialState: <users>{
     users: [],
+    chatters: [],
     loading: true,
     error: false,
     FriendRequests: [],
@@ -43,6 +67,10 @@ const USER_SLICE = createSlice({
   reducers: {
     updateUsers: (state, action) => {
       state.users = action.payload;
+      state.loading = false;
+    },
+    updateChatters: (state, action) => {
+      state.chatters = action.payload;
       state.loading = false;
     },
     updateFriends: (state, action) => {
@@ -60,7 +88,7 @@ const USER_SLICE = createSlice({
     },
   },
   extraReducers(builder) {
-    builder.addCase(fetchChatters.fulfilled, (state, action) => {
+    builder.addCase(fetchUsers.fulfilled, (state, action) => {
       state.loading = false;
       state.users = action.payload;
     });
@@ -70,6 +98,7 @@ const USER_SLICE = createSlice({
 export const {
   updateUsers,
   setLoading,
+  updateChatters,
   setError,
   updateFriends,
   updateFriendRequests,

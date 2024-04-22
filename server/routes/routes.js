@@ -15,21 +15,24 @@ const Friends = require("../models/FriendsModel");
 const FriendRequests = require("../models/FriendRequests");
 const getCombinedId = require("../utils/getCombinedId");
 const { ObjectId } = require("mongodb");
+const Convo = require("../models/ConvoModel");
 
 router.use(cookieParser());
 
-router.post("/users", authenticate,async (req, res) => {
+router.post("/users", authenticate, async (req, res) => {
   try {
-    const userID=req.body.userID;
-    const pageNo=(req.query.pageNo||1)-1;
-    const limitingNumber=10;
+    const userID = req.body.userID;
+    const pageNo = (req.query.pageNo || 1) - 1;
+    const limitingNumber = 10;
     await connectToDB();
-    const noOfUsers=await User.estimatedDocumentCount()
-    console.log("no of users",noOfUsers)
-    const users = await User.find({_id:{$ne:new ObjectId(userID)}}).limit(limitingNumber).skip(pageNo*limitingNumber);
+    const noOfUsers = await User.estimatedDocumentCount();
+    console.log("no of users", noOfUsers);
+    const users = await User.find({ _id: { $ne: new ObjectId(userID) } })
+      .limit(limitingNumber)
+      .skip(pageNo * limitingNumber);
     res.status(200).json({
       users,
-      noOfUsers:noOfUsers-1,
+      noOfUsers: noOfUsers - 1,
     });
   } catch (error) {
     res.status(200).json({
@@ -39,47 +42,155 @@ router.post("/users", authenticate,async (req, res) => {
     });
   }
 });
+router.post("/chatters", authenticate, async (req, res) => {
+  try {
+    const userID = req.body.userID;
+    const pageNo = (req.query.pageNo || 1) - 1;
+    const limitingNumber = 10;
+    await connectToDB();
+    console.log(userID);
+    // await Convo.findByIdAndUpdate("66269d8923e9f5554a7f00fc",
 
-router.post("/user",authenticate, async (req, res) => {
-  const requestUserID=req.query.userID;
-  const userID=req.body.userID;
+    // { $addToSet: { messages: { sender: "66269bd4d48d8e15fc5b6c04", message: "k xa khabar" } } })
+    const result = await Friends.aggregate([
+      // Match the document where the userID matches the given userId
+      { $match: { userID: new ObjectId(userID) } },
+      // Unwind the friends array to deconstruct the array
+      { $unwind: "$friends" },
+      // Lookup the conversation details for each friend
+      {
+        $lookup: {
+          from: "convos", // Assuming the collection name is 'convos'
+          localField: "friends.convoID",
+          foreignField: "_id",
+          as: "conversation",
+        },
+      },
+      // Unwind the conversation array to deconstruct the array
+      { $unwind: "$conversation" },
+      // Sort the conversations by updatedAt timestamp in descending order
+      { $sort: { "conversation.updatedAt": -1 } },
+      { $skip:  pageNo*limitingNumber}, // Skip the first N results (for pagination)
+      { $limit: limitingNumber },
+      // Group the conversations by combinedID to remove duplicates
+      {
+        $group: {
+          _id: "$conversation.combinedID",
+          conversation: { $first: "$conversation" },
+        },
+      },
+      // Replace root to reshape the document structure
+      { $replaceRoot: { newRoot: "$conversation" } },
+      // Project to include only the latest message
+      {
+        $project: {
+          _id: 1,
+          combinedID: 1,
+          latestMessage: { $arrayElemAt: ["$messages", -1] },
+          filteredParticipants: {
+            $filter: {
+              input: "$participants",
+              as: "participant",
+              cond: { $ne: ["$$participant", new ObjectId(userID)] },
+            },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "users",
+          localField: "filteredParticipants",
+          foreignField: "_id",
+          as: "participantDetails",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          combinedID: 1,
+          latestMessage: 1,
+          participantDetails: { $arrayElemAt: ["$participantDetails", 0] }, // Extract the first (and only) element from the array
+        },
+      },
+    ]);
+
+    return res.json({ users: result });
+  } catch (error) {
+    res.status(200).json({
+      error: {
+        errorMessage: error,
+      },
+    });
+  }
+});
+
+router.post("/user", authenticate, async (req, res) => {
+  const requestUserID = req.query.userID;
+  const userID = req.body.userID;
   try {
     await connectToDB();
 
-    const isFriend = await Friends.findOne({userID,"friends.userID": requestUserID},{
-      'friends.$': 1
-    }).populate({path:"friends.userID"})
-    if(isFriend){
-      return res.status(200).json(
-        {isFriend:true,hasIGotRequest:false,hasISentRequest:false,userDetails:isFriend.friends[0].userID}
-      );
+    const isFriend = await Friends.findOne(
+      { userID, "friends.userID": requestUserID },
+      {
+        "friends.$": 1,
+      }
+    ).populate({ path: "friends.userID" });
+    if (isFriend) {
+      return res
+        .status(200)
+        .json({
+          isFriend: true,
+          hasIGotRequest: false,
+          hasISentRequest: false,
+          userDetails: isFriend.friends[0].userID,
+        });
       return;
     }
-    const hasIGotRequest=await FriendRequests.findOne({userID,"friendRequests":requestUserID},{
-      'friendRequests.$': 1
-    }).populate({path:"friendRequests"});
-    if(hasIGotRequest){
-      return res.status(200).json(
-        {isFriend:false,hasIGotRequest:true,hasISentRequest:false,userDetails:hasIGotRequest.friendRequests[0]}
-      );
+    const hasIGotRequest = await FriendRequests.findOne(
+      { userID, friendRequests: requestUserID },
+      {
+        "friendRequests.$": 1,
+      }
+    ).populate({ path: "friendRequests" });
+    if (hasIGotRequest) {
+      return res
+        .status(200)
+        .json({
+          isFriend: false,
+          hasIGotRequest: true,
+          hasISentRequest: false,
+          userDetails: hasIGotRequest.friendRequests[0],
+        });
       return;
     }
-    const hasISentRequest=await FriendRequests.findOne({userID:requestUserID,"friendRequests":userID},{
-      'friendRequests.$': 1
-    }).populate('userID');
-    if(hasISentRequest){
-      return res.status(200).json(
-        {isFriend:false,hasIGotRequest:false,hasISentRequest:true,userDetails:hasISentRequest.userID}
-      );
+    const hasISentRequest = await FriendRequests.findOne(
+      { userID: requestUserID, friendRequests: userID },
+      {
+        "friendRequests.$": 1,
+      }
+    ).populate("userID");
+    if (hasISentRequest) {
+      return res
+        .status(200)
+        .json({
+          isFriend: false,
+          hasIGotRequest: false,
+          hasISentRequest: true,
+          userDetails: hasISentRequest.userID,
+        });
       return;
     }
-    const userDetails=await User.findById(requestUserID)
-    return res.status(200).json(
-      {isFriend:false,userDetails,hasIGotRequest:false,hasISentRequest:false,}
-    );
+    const userDetails = await User.findById(requestUserID);
+    return res
+      .status(200)
+      .json({
+        isFriend: false,
+        userDetails,
+        hasIGotRequest: false,
+        hasISentRequest: false,
+      });
     return;
-
-    
   } catch (error) {
     res.status(500).json({
       error: {
@@ -115,15 +226,25 @@ router.post("/confirmRequest", authenticate, async (req, res) => {
   const requestID = req.body.requestID;
   console.log("asd", userID, requestID);
   const combinedID = getCombinedId(userID, requestID);
-
+  console.log("cas", combinedID);
   try {
+    const ConvoDetails = await Convo.create({
+      combinedID: combinedID,
+      messages: [],
+      participants: [userID, requestID],
+    });
+    console.log("convo is", ConvoDetails);
     await Friends.updateOne(
-      { userID ,"friends.userID": { $ne: requestID} },
-      { $addToSet: { friends: { userID: requestID, convoID: combinedID } } }
+      { userID, "friends.userID": { $ne: requestID } },
+      {
+        $addToSet: {
+          friends: { userID: requestID, convoID: ConvoDetails._id },
+        },
+      }
     );
     await Friends.updateOne(
-      { userID: requestID,"friends.userID": { $ne: userID } },
-      { $addToSet: { friends: { userID, convoID: combinedID } } }
+      { userID: requestID, "friends.userID": { $ne: userID } },
+      { $addToSet: { friends: { userID, convoID: ConvoDetails._id } } }
     );
     await FriendRequests.updateOne(
       { userID },
@@ -165,7 +286,7 @@ router.post("/unsendRequest", authenticate, async (req, res) => {
   const requestID = req.body.requestID;
   try {
     await FriendRequests.updateOne(
-      { userID:requestID },
+      { userID: requestID },
       { $pull: { friendRequests: userID } }
     );
     return res.json({});
@@ -181,36 +302,43 @@ router.post("/unsendRequest", authenticate, async (req, res) => {
 
 router.post("/getFriendRequests", authenticate, async (req, res) => {
   const userID = req.body.userID;
-  const pageNo=(req.query.pageNo||1)-1;
-  const limitingNumber=10;
+  const pageNo = (req.query.pageNo || 1) - 1;
+  const limitingNumber = 10;
   console.log("req body is", userID);
   try {
     await connectToDB();
-    const result=await FriendRequests.aggregate([
-      {$match:{userID:new ObjectId(userID)}},
-      {$project:{totalFriendRequests:{$size:"$friendRequests"},friendRequests: { $slice: ["$friendRequests", pageNo * 10, 10] }}},
+    const result = await FriendRequests.aggregate([
+      { $match: { userID: new ObjectId(userID) } },
+      {
+        $project: {
+          totalFriendRequests: { $size: "$friendRequests" },
+          friendRequests: { $slice: ["$friendRequests", pageNo * 10, 10] },
+        },
+      },
       {
         $lookup: {
           from: "users",
           localField: "friendRequests",
           foreignField: "_id",
-          as: "populatedFriendRequests"
-        }
+          as: "populatedFriendRequests",
+        },
       },
       {
         $addFields: {
-          "friendRequests": [{ $arrayElemAt: ["$populatedFriendRequests", 0] }]
-        }
+          friendRequests: [{ $arrayElemAt: ["$populatedFriendRequests", 0] }],
+        },
       },
       {
         $project: {
           "friendRequests.userID": 0,
-          populatedFriendRequests: 0
-        }
-      }
-
-    ])
-    return res.json({ users: result[0].friendRequests ,noOfUser:result[0].totalFriendRequests});
+          populatedFriendRequests: 0,
+        },
+      },
+    ]);
+    return res.json({
+      users: result[0].friendRequests,
+      noOfUser: result[0].totalFriendRequests,
+    });
   } catch (error) {
     console.log(error);
     return res.status(500).json({
@@ -224,36 +352,43 @@ router.post("/getFriendRequests", authenticate, async (req, res) => {
 router.post("/friends", authenticate, async (req, res) => {
   try {
     const userID = req.body.userID;
-    console.log("user ID is",userID)
-    const pageNo=(req.query.pageNo||1)-1;
-    const limitingNumber=10;
+    console.log("user ID is", userID);
+    const pageNo = (req.query.pageNo || 1) - 1;
+    const limitingNumber = 10;
     await connectToDB();
-    const result=await Friends.aggregate([
-      {$match:{userID:new ObjectId(userID)}},
-      {$project:{totalFriends:{$size:"$friends"},friends: { $slice: ["$friends", pageNo * 10, 10] }}},
+    const result = await Friends.aggregate([
+      { $match: { userID: new ObjectId(userID) } },
+      {
+        $project: {
+          totalFriends: { $size: "$friends" },
+          friends: { $slice: ["$friends", pageNo * 10, 10] },
+        },
+      },
       {
         $lookup: {
           from: "users",
           localField: "friends.userID",
           foreignField: "_id",
-          as: "populatedFriends"
-        }
+          as: "populatedFriends",
+        },
       },
       {
         $addFields: {
-          "friends": [{ $arrayElemAt: ["$populatedFriends", 0] }]
-        }
+          friends: [{ $arrayElemAt: ["$populatedFriends", 0] }],
+        },
       },
       {
         $project: {
           "friends.userID": 0,
           "friends._id": 0,
-          populatedFriends: 0
-        }
-      }
-
-    ])
-    return res.json({ users: result[0].friends,noOfUsers:result[0].totalFriends});
+          populatedFriends: 0,
+        },
+      },
+    ]);
+    return res.json({
+      users: result[0].friends,
+      noOfUsers: result[0].totalFriends,
+    });
   } catch (error) {
     res.status(500).json({
       error: {
@@ -270,13 +405,13 @@ router.post("/deleteFriend", authenticate, async (req, res) => {
     await connectToDB();
     await Friends.updateOne(
       { userID },
-      { $pull: { friends: {userID:friendID} }}
+      { $pull: { friends: { userID: friendID } } }
     );
     await Friends.updateOne(
-      { userID:friendID },
-      { $pull: { friends: {userID:userID}} }
+      { userID: friendID },
+      { $pull: { friends: { userID: userID } } }
     );
-    return res.status(200).json({ message:"success" });
+    return res.status(200).json({ message: "success" });
   } catch (error) {
     res.status(500).json({
       error: {
@@ -286,10 +421,10 @@ router.post("/deleteFriend", authenticate, async (req, res) => {
   }
 });
 
-router.post("/users/search", authenticate,async (req, res) => {
+router.post("/users/search", authenticate, async (req, res) => {
   try {
-    const userID=req.body.userID
-    console.log("userasdf",userID)
+    const userID = req.body.userID;
+    console.log("userasdf", userID);
     const searchString = req.body.searchString;
     console.log("params", searchString);
     await connectToDB();
@@ -305,12 +440,12 @@ router.post("/users/search", authenticate,async (req, res) => {
       },
       {
         $match: {
-          _id: { $ne: new ObjectId(userID) }
-        }
+          _id: { $ne: new ObjectId(userID) },
+        },
       },
     ];
     const users = await User.aggregate(pipeline).limit(10);
-    console.log("users are",users)
+    console.log("users are", users);
     res.status(200).json({
       users,
       noOfUser: users.length,

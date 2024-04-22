@@ -9,6 +9,23 @@ export interface FriendBoxInterface {
   image: string;
   dateofbirth: Date;
 }
+export interface ChatterInterface {
+  _id: string;
+  combinedID: string;
+  latestMessage?: {
+    message: string;
+    sender: string;
+    _id: string;
+    datetime: Date;
+  };
+  participantDetails: {
+    _id: string;
+    email: string;
+    username: string;
+    websocketId: string;
+    __v: number;
+  };
+}
 export interface UserFetchResults {
   users: FriendBoxInterface[];
   noOfUser: number;

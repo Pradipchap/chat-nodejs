@@ -1,14 +1,15 @@
-import { FriendBoxInterface } from "../../interfaces/dataInterfaces";
+import { ChatterInterface } from "../../interfaces/dataInterfaces";
 import { updateCurrentChatter } from "../../redux/slices/ChatSlice";
 import { useAppDispatch, useAppSelector } from "../../utils/reduxHooks";
 
 export default function FriendBox({
-  username,
-  time,
-  latestMessage = "tesova first half",
-  image,
+  participantDetails,
+  latestMessage,
+  combinedID,
+
+  // image,
   _id,
-}: FriendBoxInterface) {
+}: ChatterInterface) {
   const dispatch = useAppDispatch();
   const primaryChatter = useAppSelector((state) => state.currentUser.userID);
   const currentChat = useAppSelector((state) => state.chat);
@@ -29,24 +30,24 @@ export default function FriendBox({
       } px-2 rounded-lg flex items-center h-16 gap-3 mt-2 w-full`}
     >
       <div className="relative w-14 h-14 bg-red-500 rounded-full">
-        <img
+        {/* <img
           src={image}
           alt="user image"
           height={20}
           width={20}
           className="h-full w-full rounded-full"
-        />
+        /> */}
         <div className="h-3 w-3 bg-green-600 rounded-full absolute bottom-[2%] right-[10%]" />
       </div>
 
       <div className="flex-1 h-full py-1 flex flex-col justify-start items-start">
         {" "}
-        <p className="text-lg font-bold text-white">{username}</p>
+        <p className="text-lg font-bold text-white">{participantDetails.username}</p>
         <div className="flex justify-between items-center gap-2 pt-1 text-gray-400">
           <p className="text-[13px] max-w-32 truncate ">
-            you : {latestMessage}
+            {latestMessage?.sender===primaryChatter?"you":participantDetails.username} : {latestMessage?.message}
           </p>
-          <p className="text-[10px]">{time?.toDateString() || "afds"}</p>
+          {latestMessage?.datetime&&<p className="text-[10px]">{new Date(latestMessage.datetime)?.toDateString() || "afds"}</p>}
         </div>
       </div>
     </button>

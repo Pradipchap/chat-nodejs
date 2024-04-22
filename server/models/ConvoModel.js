@@ -7,7 +7,8 @@ const messageSchema = new Schema({
 });
 
 const conversationSchema = new Schema({
-  users: { type: String, required: true },
+  combinedID: { type: String, required: true,unique:true },
+  participants:[{type:Schema.Types.ObjectId,ref:"User"}],
   messages: [messageSchema]
 }, { timestamps: true }); // Automatically add createdAt and updatedAt fields
 

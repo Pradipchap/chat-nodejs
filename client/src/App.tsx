@@ -13,6 +13,7 @@ import Loading from "./components/Loading.tsx";
 import UserProfile from "./sections/UserProfile.tsx";
 import { SERVER_BASE_URL } from "../utils/constants.ts";
 import { useAppSelector } from "../utils/reduxHooks.ts";
+import Chat from "./components/ChatBox.tsx";
 
 const AddFriends = lazy(async () => import(".//sections/AddFriends.tsx"));
 const FriendRequests = lazy(async () =>
@@ -25,6 +26,12 @@ function App() {
     {
       path: "/",
       element: <AuthenticatedRoute wsClient={wsClient} />,
+      children: [
+        {
+          path: "chat/:chatterID",
+          element: <Chat wsClient={wsClient} />,
+        },
+      ],
     },
     {
       path: "/login",

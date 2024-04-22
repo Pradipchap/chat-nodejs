@@ -89,11 +89,10 @@ async function handleMessage(message, connectionId, connection) {
       await connectToDB();
       const documentID =
       sender < receiver ? sender + receiver : receiver + sender;
-    const doesConversationExists = await Convo.exists({users:documentID})
-    // if(!doesConversationExists){
-    //   await Convo.create({users:documentID})
-    // }
-    await Convo.updateOne({users:documentID},{$push:{messages:{message:messageString,sender}}})
+    const doesConversationExists = await Convo.exists({combinedID:documentID})
+    if(doesConversationExists){
+      await Convo.updateOne({combinedID:documentID},{$push:{messages:{message:messageString,sender}}})
+    }
       break;
     }
     case typesDef.VIDEO: {
@@ -161,7 +160,7 @@ async function handleMessage(message, connectionId, connection) {
         await connectToDB();
         console.log("page is",pageNo)
         await Convo.aggregate([
-          { $match: { users: documentID } }, // Match the document by its ID
+          { $match: { combinedID: documentID } }, // Match the document by its ID
           { $project: { first10Messages: { $slice: ["$messages",-10*Number(pageNo), 10,]} } }
         ]).then(async(result) => {
           if (result.length > 0) {
