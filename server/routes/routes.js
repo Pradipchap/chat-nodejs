@@ -380,7 +380,6 @@ router.post("/friends", authenticate, async (req, res) => {
       {
         $project: {
           "friends.userID": 0,
-          "friends._id": 0,
           populatedFriends: 0,
         },
       },
@@ -402,7 +401,9 @@ router.post("/deleteFriend", authenticate, async (req, res) => {
   try {
     const userID = req.body.userID;
     const friendID = req.body.friendID;
+    const combinedID = getCombinedId(userID, friendID);
     await connectToDB();
+    await Convo.deleteOne({combinedID})
     await Friends.updateOne(
       { userID },
       { $pull: { friends: { userID: friendID } } }

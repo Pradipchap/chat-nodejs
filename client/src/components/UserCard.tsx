@@ -1,6 +1,7 @@
 import { useState } from "react";
 import StatusButton from "./StatusButton";
 import { SUBMIT_STATUS } from "../../utils/constants";
+import { Link } from "react-router-dom";
 
 interface props {
   userID?: string;
@@ -8,7 +9,7 @@ interface props {
   email: string;
   image?: string;
 }
-export default function UserCard({ username, email,userID }: props) {
+export default function UserCard({ username, email, userID }: props) {
   const [requestStatus, setRequestStatus] = useState<SUBMIT_STATUS>(
     SUBMIT_STATUS.IDLE
   );
@@ -20,8 +21,13 @@ export default function UserCard({ username, email,userID }: props) {
           src="/docs/images/people/profile-picture-3.jpg"
           alt="Bonnie image"
         />
-        <h5 className="mb-1 text-xl font-medium text-gray-900">{username}</h5>
-        <span className="text-sm text-gray-500">{email}</span>
+        <Link
+          to={`/friends/userProfile/${userID}`}
+          className="mb-1 text-xl font-medium text-gray-900"
+        >
+          {username}
+        </Link>
+        <span className="text-sm text-gray-500">{userID}</span>
         <div className="flex mt-4 md:mt-6"></div>
         <div className="flex flex-col gap-2 w-full">
           <StatusButton

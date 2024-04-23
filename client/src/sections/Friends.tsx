@@ -1,5 +1,4 @@
-import { Outlet, useLocation, useNavigate } from "react-router-dom";
-import Button from "../components/Button";
+import { Outlet, useLocation } from "react-router-dom";
 
 import Loginstatus from "../components/Loginstatus";
 import SearchFriends from "../components/Inputs/SearchFriends";
@@ -12,6 +11,7 @@ import {
   updateUsers,
 } from "../../redux/slices/UsersSlice";
 import Pagination from "../components/Pagination";
+import CustomLink from "../components/CustomLink";
 
 function getUrlValue(url: string) {
   const strings = url.split("/");
@@ -29,6 +29,7 @@ export default function Friends() {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
+    setTotalData(0)
     setcurrentPath(getUrlValue(pathname.pathname));
   }, [pathname.pathname]);
 
@@ -81,7 +82,7 @@ export default function Friends() {
       <div className="w-[80%] flex flex-col gap-10">
         <SearchFriends />
         <Outlet />
-        {totalData > 0 && (
+        {totalData > 0 && currentPath !== "userProfile" && (
           <Pagination
             currentPage={pageNo}
             dataLength={totalData}
@@ -95,34 +96,33 @@ export default function Friends() {
 }
 
 const NavigationItems = [
-  { name: "Friends", url: "friends" },
-  { name: "Friend Request", url: "friendRequests" },
-  { name: "Add friends", url: "addFriends" },
+  { name: "Friends", url: "friends",icon:"Users" },
+  { name: "Friend Requests", url: "friendRequests",icon:"FriendRequest" },
+  { name: "Add friends", url: "addFriends",icon:"Plus" },
 ];
 function Navigation() {
-  const navigate = useNavigate();
   return (
     <div className="flex flex-col justify-between min-h-screen">
       <div className="px-5 py-5 flex flex-col gap-2 items-start">
-        <Button
-          onClick={() => navigate("/")}
-          className="text-white justify-center bg-transparent gap-2 items-center text-xl mb-10"
+        <CustomLink
+          to={"/"}
+          className=" active:bg-red-600 text-white justify-center bg-transparent gap-2 items-center text-xl mb-10"
           iconClassName="text-white"
           icon="Back"
         >
           Back
-        </Button>
+        </CustomLink>
         {NavigationItems.map((item) => {
           return (
-            <Button
+            <CustomLink
               key={item.url}
-              onClick={() => navigate(item.url)}
-              icon={"kj"}
+              to={item.url}
+              icon={item.icon}
               iconClassName="text-white"
-              className="w-full text-white bg-transparent hover:bg-gray-200/10 gap-5 justify-start text-xl py-3"
+              className="w-full text-white bg-transparent hover:bg-gray-200/10 active:bg-red-900 gap-5 justify-start text-xl py-3"
             >
               {item.name}
-            </Button>
+            </CustomLink>
           );
         })}
       </div>

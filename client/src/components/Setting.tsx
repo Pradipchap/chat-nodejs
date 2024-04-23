@@ -21,7 +21,7 @@ function Content() {
     <div className="py-4 px-2 w-44 bg-blue-900 shadow-md rounded">
       {[
         { name: "Profile", url: "profile", iconName: "Profile" },
-        { name: "Friends", url: "friends", iconName: "Users" },
+        { name: "Friends", url: "friends/friends", iconName: "Users" },
         { name: "Setting", url: "setting", iconName: "Setting" },
       ].map((element) => {
         return (

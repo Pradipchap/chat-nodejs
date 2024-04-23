@@ -6,6 +6,7 @@ import React, {
   RefObject,
   SetStateAction,
 } from "react";
+import { LinkProps } from "react-router-dom";
 
 
 export interface CustomLinkProps {
@@ -88,8 +89,8 @@ export interface OrDividerProps {
   className?: string;
 }
 
-export interface ButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+export interface CustomLinkProp
+  extends LinkProps {
   className?: string;
   variant?: "primary" | "muted";
   icon?: string;

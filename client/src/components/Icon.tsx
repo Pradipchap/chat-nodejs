@@ -28,6 +28,7 @@ import {
   faLeftLong,
   faGear,
   faMessage,
+  faUserPlus,
 } from "@fortawesome/free-solid-svg-icons";
 import { faSpinner, faQuestion } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -163,6 +164,13 @@ export default function Icon({ name, className = "" }: IconProps) {
       return (
         <FontAwesomeIcon
           icon={faUserGroup}
+          className={classNames("text-black text-lg", className)}
+        />
+      );
+      case "FriendRequest":
+      return (
+        <FontAwesomeIcon
+          icon={faUserPlus}
           className={classNames("text-black text-lg", className)}
         />
       );
