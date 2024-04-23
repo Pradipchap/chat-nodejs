@@ -9,6 +9,17 @@ export interface FriendBoxInterface {
   image: string;
   dateofbirth: Date;
 }
+
+export interface ChatsDataInterface {
+  page: number;
+  messages: {
+    message: string;
+    sender: string;
+    _id: string;
+    datetime: string;
+  }[];
+}
+
 export interface ChatterInterface {
   _id: string;
   combinedID: string;

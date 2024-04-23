@@ -4,6 +4,7 @@ import ChatReducer from "./slices/ChatSlice";
 import ToastReducer from "./slices/ToastSlice";
 import CurrentUserReducer from "./slices/SessionSlice";
 import CallReducer from "./slices//CallSlice";
+import WsReducer from "./slices/wsClientSlice";
 
 export const store = configureStore({
   reducer: {
@@ -12,6 +13,7 @@ export const store = configureStore({
     toast: ToastReducer,
     currentUser: CurrentUserReducer,
     call: CallReducer,
+    ws:WsReducer
   },
 });
 

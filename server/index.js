@@ -11,6 +11,7 @@ const connectToDB = require("./utils/database");
 const User = require("./models/UserModel");
 const saveMessage = require("./utils/worker");
 const Convo = require("./models/ConvoModel");
+const getCombinedId = require("./utils/getCombinedId");
 
 app.use(cors());
 app.use("/api", routes);
@@ -48,7 +49,7 @@ const typesDef = {
 function broadcastMessage(sender, receiver, message, connectionId, type) {
   // console.log("receiver id is", receiver);
   // We are sending the current data to all connected clients
-
+console.log("receive is",receiver)
   try {
     if (receiver in users) {
       if ("connection" in users[receiver]) {
@@ -82,15 +83,19 @@ async function handleMessage(message, connectionId, connection) {
       users[userID] = { ...dataFromClient, connection, connectionId };
       console.log("user");
       // json.data = { users, userActivity };
+      broadcastMessage(sender, receiver, message, connectionId, "newUser");
       break;
     }
     case typesDef.MESSAGE: {
+      console.log("receiver is",receiver)
       broadcastMessage(sender, receiver, message, connectionId, "message");
       await connectToDB();
-      const documentID =
-      sender < receiver ? sender + receiver : receiver + sender;
+      const documentID =getCombinedId(sender,receiver)
+      console.log("dsa",documentID)
     const doesConversationExists = await Convo.exists({combinedID:documentID})
+    console.log("convo exists",doesConversationExists)
     if(doesConversationExists){
+      
       await Convo.updateOne({combinedID:documentID},{$push:{messages:{message:messageString,sender}}})
     }
       break;
@@ -154,8 +159,8 @@ async function handleMessage(message, connectionId, connection) {
       }
       break;
       case typesDef.GET_MESSAGES:{
-        const documentID =
-        sender < receiver ? sender + receiver : receiver + sender;
+        const documentID =getCombinedId(sender,receiver)
+        console.log("docuemtn id",documentID)
         const pageNo= JSON.parse(messageString).page
         await connectToDB();
         console.log("page is",pageNo)
@@ -173,6 +178,8 @@ async function handleMessage(message, connectionId, connection) {
                 receiver: receiver,
               }),
             ]);
+            console.log("messages",messages)
+            console.log("sender",sender)
             const requestData = new Blob([messages]);
             const combinedData = await new Blob([
               detail,

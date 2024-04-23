@@ -1,29 +1,29 @@
+import { Link } from "react-router-dom";
 import { ChatterInterface } from "../../interfaces/dataInterfaces";
-import { updateCurrentChatter } from "../../redux/slices/ChatSlice";
 import { useAppDispatch, useAppSelector } from "../../utils/reduxHooks";
+import { updateCurrentChatter } from "../../redux/slices/ChatSlice";
 
 export default function FriendBox({
   participantDetails,
   latestMessage,
-  combinedID,
-
-  // image,
   _id,
 }: ChatterInterface) {
-  const dispatch = useAppDispatch();
   const primaryChatter = useAppSelector((state) => state.currentUser.userID);
   const currentChat = useAppSelector((state) => state.chat);
-  const isActive = currentChat.secondaryChatter === _id;
+  const isActive = currentChat.secondaryChatter === participantDetails._id;
+  const dispatch = useAppDispatch();
+
   function updateChatter() {
     dispatch(
       updateCurrentChatter({
         primaryChatter: primaryChatter,
-        secondaryChatter: _id,
+        secondaryChatter: participantDetails._id,
       })
     );
   }
   return (
-    <button
+    <Link
+      to={`chat/${participantDetails._id}`}
       onClick={updateChatter}
       className={`${
         isActive ? "bg-gray-700" : "b"
@@ -42,14 +42,23 @@ export default function FriendBox({
 
       <div className="flex-1 h-full py-1 flex flex-col justify-start items-start">
         {" "}
-        <p className="text-lg font-bold text-white">{participantDetails.username}</p>
+        <p className="text-lg font-bold text-white">
+          {participantDetails.username}
+        </p>
         <div className="flex justify-between items-center gap-2 pt-1 text-gray-400">
           <p className="text-[13px] max-w-32 truncate ">
-            {latestMessage?.sender===primaryChatter?"you":participantDetails.username} : {latestMessage?.message}
+            {latestMessage?.sender === primaryChatter
+              ? "you"
+              : participantDetails.username.slice(0, 5)}{" "}
+            : {latestMessage?.message}
           </p>
-          {latestMessage?.datetime&&<p className="text-[10px]">{new Date(latestMessage.datetime)?.toDateString() || "afds"}</p>}
+          {latestMessage?.datetime && (
+            <p className="text-[10px]">
+              {new Date(latestMessage.datetime)?.toDateString() || "afds"}
+            </p>
+          )}
         </div>
       </div>
-    </button>
+    </Link>
   );
 }

@@ -12,8 +12,8 @@ export const updatePrimaryChatter = createAsyncThunk(
 );
 export const updateSecondaryChatter = createAsyncThunk(
   "secondaryChatter",
-  async (primaryChatter: string) => {
-    return primaryChatter;
+  async (secondaryChatter: string) => {
+    return secondaryChatter;
   }
 );
 
@@ -55,5 +55,6 @@ const CHAT_SLICE = createSlice({
   },
 });
 
-export const { updateCurrentChatter, updateChats,pushChat,pushMessage } = CHAT_SLICE.actions;
+export const { updateCurrentChatter, updateChats, pushChat, pushMessage } =
+  CHAT_SLICE.actions;
 export default CHAT_SLICE.reducer;

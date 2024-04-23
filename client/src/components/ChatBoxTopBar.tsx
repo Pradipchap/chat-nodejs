@@ -68,7 +68,7 @@ export default function ChatBoxTopBar({ wsClient }: { wsClient: WebSocket }) {
   }
   return (
     <div className="bg-gray-600 h-14 w-full absolute top-0 flex justify-between items-center px-2">
-      <p>{chatDetails.secondaryChatter}</p>
+      <p>{}</p>
       <button
         onClick={handleCallOpen}
         className="rounded-md hover:bg-red-800 transition-all px-3 py-2 bg-red-600 text-white"

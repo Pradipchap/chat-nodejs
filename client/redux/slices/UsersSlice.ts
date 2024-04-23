@@ -8,7 +8,7 @@ import { SERVER_BASE_URL } from "../../utils/constants";
 import { updateSecondaryChatter } from "./ChatSlice";
 interface users {
   users: FriendBoxInterface[];
-  chatters:ChatterInterface [];
+  chatters: ChatterInterface[];
   FriendRequests: FriendBoxInterface[];
   Friends: FriendBoxInterface[];
   loading: boolean;
@@ -44,8 +44,8 @@ export const fetchChatters = createAsyncThunk(
           Authorization: "Bearer" + " " + accessToken,
         },
       });
-      const results = await response.json();
-      dispatch(updateChatters(results.users));
+      const results: { users: ChatterInterface[] } = await response.json();
+      dispatch(updateSecondaryChatter(results.users[0].participantDetails._id));
       return results.users;
     } catch (error) {
       console.log(error);
@@ -91,6 +91,10 @@ const USER_SLICE = createSlice({
     builder.addCase(fetchUsers.fulfilled, (state, action) => {
       state.loading = false;
       state.users = action.payload;
+    });
+    builder.addCase(fetchChatters.fulfilled, (state, action) => {
+      state.loading = false;
+      state.chatters = action.payload;
     });
   },
 });

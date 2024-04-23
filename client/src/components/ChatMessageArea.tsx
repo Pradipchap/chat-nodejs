@@ -1,29 +1,32 @@
-import { Fragment, useEffect, useState } from "react";
+import { Fragment, useContext, useEffect, useState } from "react";
 import { useAppSelector } from "../../utils/reduxHooks";
 import ChatMessage from "./ChatMessage";
 import sendSocketMessage from "../../functions/sendSocketMessage";
+import { useParams } from "react-router-dom";
+import { WsContext } from "../../utils/WsProvider";
 
-export default function ChatMessageArea({ wsClient }: { wsClient: WebSocket }) {
+export default function ChatMessageArea() {
+  const { wsClient } = useContext(WsContext);
   const currentChats = useAppSelector((state) => state.chat.chats);
-  const primaryChatter = useAppSelector((state) => state.chat.primaryChatter);
-  const secondaryChatter = useAppSelector(
-    (state) => state.chat.secondaryChatter
-  );
+  const params = useParams();
+  const userID = useAppSelector((state) => state.currentUser.userID);
+  const secondaryChatter = params.chatterID;
   const [page, setPage] = useState(1);
+  const isWsReady = useAppSelector((state) => state.ws.isActive);
 
   useEffect(() => {
     function getChats() {
-      if (wsClient.readyState === 1 && secondaryChatter !== "")
-        sendSocketMessage({
-          sender: primaryChatter,
-          receiver: secondaryChatter,
-          type: "getMess",
-          data: new Blob([JSON.stringify({ page })]),
-          wsClient: wsClient,
-        });
+      sendSocketMessage({
+        sender: userID,
+        receiver: secondaryChatter || "",
+        type: "getMess",
+        data: new Blob([JSON.stringify({ page })]),
+        wsClient: wsClient,
+      });
     }
-    getChats();
-  }, [primaryChatter, secondaryChatter, wsClient.readyState, page]);
+    if (isWsReady === true && userID !== "" && secondaryChatter !== "")
+      getChats();
+  }, [userID, isWsReady, secondaryChatter, page]);
 
   return (
     <div className="top-14 w-full h-[calc(100vh-120px)] flex flex-col gap-5 px-2 py-10 scroll-smooth overflow-y-auto">

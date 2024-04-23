@@ -1,12 +1,16 @@
+import { useParams } from "react-router-dom";
 import sendSocketMessage from "../../functions/sendSocketMessage";
-import { pushChat, pushMessage, updateChats } from "../../redux/slices/ChatSlice";
+import {
+  pushMessage,
+} from "../../redux/slices/ChatSlice";
 import { useAppDispatch, useAppSelector } from "../../utils/reduxHooks";
 
 export default function WriteMessage({ wsClient }: { wsClient: WebSocket }) {
   const chatter = useAppSelector((state) => state.chat);
   const dispatch = useAppDispatch();
   const primaryChatter = chatter.primaryChatter;
-  const secondaryChatter = chatter.secondaryChatter;
+  const params = useParams();
+  const secondaryChatter = params.chatterID;
 
   function SendMessage(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Enter") {
@@ -14,12 +18,11 @@ export default function WriteMessage({ wsClient }: { wsClient: WebSocket }) {
       if (event.currentTarget.value.length < 1) return;
       try {
         const text = event.currentTarget.value;
-        console.log(text === "");
         const nextBlob = new Blob([text]);
         dispatch(pushMessage([{ message: text, isReceiver: false }]));
         sendSocketMessage({
           sender: primaryChatter,
-          receiver: secondaryChatter,
+          receiver: secondaryChatter || "",
           type: "message",
           wsClient: wsClient,
           data: nextBlob,
