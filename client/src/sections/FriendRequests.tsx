@@ -16,9 +16,14 @@ export default function FriendRequests() {
   return (
     <div className="flex gap-5 p-2">
       {friendRequests.length > 0 &&
+        friendRequests[0] !== null &&
         friendRequests.map((item) => {
           return (
-            <SendRequestCard username={item.username} email={item.email} userID={item._id} />
+            <SendRequestCard
+              username={item.username}
+              email={item.email}
+              userID={item._id}
+            />
           );
         })}
     </div>
@@ -37,14 +42,17 @@ function SendRequestCard({ userID, username }: props) {
     try {
       const requestData = { requestID: userID };
       setrequestStatus(SUBMIT_STATUS.LOADING);
-      const response = await fetch(SERVER_BASE_URL + "/api/confirmRequest?pageNo=", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: "Bearer" + " " + currentUser.accessToken,
-        },
-        body: JSON.stringify(requestData),
-      });
+      const response = await fetch(
+        SERVER_BASE_URL + "/api/confirmRequest?pageNo=",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: "Bearer" + " " + currentUser.accessToken,
+          },
+          body: JSON.stringify(requestData),
+        }
+      );
       console.log("response", response);
       if (response.ok) {
         setrequestStatus(SUBMIT_STATUS.SUCCESS);

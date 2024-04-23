@@ -6,6 +6,7 @@ export default function FriendsGroup() {
   return (
     <div className="flex gap-5 p-2">
       {friends.length > 0 &&
+        friends[0] !== null &&
         friends.map(( user ) => {
           return (
             <UserCard
