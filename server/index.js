@@ -43,13 +43,15 @@ const typesDef = {
   CALL_ACC: "callAcc",
   CALL_INC: "callInc",
   CALL_TIMEOUT: "callTmo",
-  GET_MESSAGES:"getMess"
+  GET_MESSAGES:"getMess",
+  CONN_CLOSED:"conClos"
 };
 
 function broadcastMessage(sender, receiver, message, connectionId, type) {
   // console.log("receiver id is", receiver);
   // We are sending the current data to all connected clients
 console.log("receive is",receiver)
+console.log(users)
   try {
     if (receiver in users) {
       if ("connection" in users[receiver]) {
@@ -96,7 +98,7 @@ async function handleMessage(message, connectionId, connection) {
     console.log("convo exists",doesConversationExists)
     if(doesConversationExists){
       
-      await Convo.updateOne({combinedID:documentID},{$push:{messages:{message:messageString,sender}}})
+      await Convo.updateOne({combinedID:documentID},{$push:{messages:{$each:[{message:messageString,sender}],$position:0}}})
     }
       break;
     }
@@ -166,7 +168,7 @@ async function handleMessage(message, connectionId, connection) {
         console.log("page is",pageNo)
         await Convo.aggregate([
           { $match: { combinedID: documentID } }, // Match the document by its ID
-          { $project: { first10Messages: { $slice: ["$messages",-10*Number(pageNo), 10,]} } }
+          { $project: { first10Messages: { $slice: ["$messages",10*(Number(pageNo)-1), 10,]} } }
         ]).then(async(result) => {
           if (result.length > 0) {
             // console.log(result[0].first10Messages)
@@ -226,31 +228,31 @@ async function handleMessage(message, connectionId, connection) {
   }
 }
 
-function handleDisconnect(userId) {
-  // console.log(`${userId} disconnected.`);
-  // const json = { type: typesDef.USER_EVENT };
-  const username = users[userId]?.username || userId;
-  userActivity.push(`${username} left the document`);
-  // json.data = { users, userActivity };
-  const leftUser = delete clients[userId];
-  delete users[userId];
-  // broadcastMessage(json);
+function handleDisconnect(connectionId) {
+
+Object.keys(users).forEach((userID)=>{
+  if(users[userID].connectionId===connectionId){
+    console.log(users[userID],"left the connection")
+  const leftUser = delete clients[userID];
+  delete users[userID];
+  }
+})
 }
 
 // A new client connection request received
 wsServer.on("connection", function (connection, req) {
   // Generate a unique code for every user
-  const connectionID = randomUUID();
+  const connectionId = randomUUID();
   console.log("Received a new connection");
 
   // Store the new connection and handle messages
   // clients[userId] = connection;
   // console.log(`${userId} connected.`);
   connection.on("message", (message) =>
-    handleMessage(message, connectionID, connection)
+    handleMessage(message, connectionId, connection)
   );
   // User disconnected
   connection.on("close", (data) => {
-    handleDisconnect(connectionID);
+    handleDisconnect(connectionId);
   });
 });

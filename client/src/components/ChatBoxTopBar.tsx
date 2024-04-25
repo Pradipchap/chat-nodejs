@@ -7,19 +7,18 @@ import {
 } from "../../redux/slices/CallSlice";
 import { useAppDispatch, useAppSelector } from "../../utils/reduxHooks";
 
-export default function ChatBoxTopBar({ wsClient }: { wsClient: WebSocket }) {
+export default function ChatBoxTopBar() {
   const dispatch = useAppDispatch();
   const chatDetails = useAppSelector((state) => state.chat);
   const callDetails = useAppSelector((state) => state.call);
   const counter = useRef<number>(0);
-  const readyState = wsClient.readyState;
 
   useEffect(() => {
     let interval;
 
     // Function to handle sending callReq message
     const sendCallReqMessage = () => {
-      if (readyState === 1 && callDetails.callStatus === "requesting") {
+      if (callDetails.callStatus === "requesting") {
         counter.current++;
         sendSocketMessage({
           sender: chatDetails.primaryChatter,
@@ -53,7 +52,7 @@ export default function ChatBoxTopBar({ wsClient }: { wsClient: WebSocket }) {
 
     // Cleanup function for clearing the interval when the component unmounts or callStatus changes to close or ended
     return () => clearInterval(interval);
-  }, [callDetails.callStatus, readyState]);
+  }, [callDetails.callStatus]);
 
   function handleCallOpen() {
     if (callDetails.callStatus === "close") {

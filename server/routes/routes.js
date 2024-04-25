@@ -231,7 +231,7 @@ router.post("/confirmRequest", authenticate, async (req, res) => {
     const ConvoDetails = await Convo.create({
       combinedID: combinedID,
       messages: [],
-      participants: [userID, requestID],
+      participants: [new ObjectId(userID),new ObjectId(requestID)],
     });
     console.log("convo is", ConvoDetails);
     await Friends.updateOne(
@@ -252,12 +252,13 @@ router.post("/confirmRequest", authenticate, async (req, res) => {
     );
     return res.json({});
   } catch (error) {
-    console.log(error);
-    return res.status(500).json({
-      error: {
-        errorMessage: error,
-      },
-    });
+    if (error.code === 11000 && error.keyPattern.users) {
+      console.error("Duplicate key error: users field has duplicate values.");
+      return res.status(400).json({ error: "Duplicate values in users field" });
+    } else {
+      console.error("MongoDB error:", error);
+      return res.status(500).json({ error: "Internal server error" });
+    }
   }
 });
 router.post("/deleteRequest", authenticate, async (req, res) => {
@@ -479,9 +480,9 @@ router.post("/register", async (req, res) => {
       return;
     }
     const hashedPassword = await bcrypt.hash(password, 10);
-    const verificationCode = Math.ceil((Math.random() + 0.1) * 1000000);
+    const x = Math.ceil((Math.random() + 0.1) * 1000000).toString();
+    const verificationCode=x.slice(0,6)
     const hashedCode = await bcrypt.hash(verificationCode.toString(), 10);
-
     await sendMail({
       to: email,
       subject: "verification",

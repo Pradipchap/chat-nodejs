@@ -11,7 +11,8 @@ interface args {
     | "callRej"
     | "callTmo"
     | "callAcc"
-    | "getMess";
+    | "getMess"
+    | "conClos";
   wsClient: WebSocket;
   data: Blob;
 }

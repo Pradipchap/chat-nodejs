@@ -1,7 +1,5 @@
 import FriendBox from "./FriendBox";
-import {
-  ChatterInterface,
-} from "../../interfaces/dataInterfaces";
+import { ChatterInterface } from "../../interfaces/dataInterfaces";
 import { useAppSelector } from "../../utils/reduxHooks";
 
 export default function FriendList() {

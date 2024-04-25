@@ -1,8 +1,6 @@
 import { useParams } from "react-router-dom";
 import sendSocketMessage from "../../functions/sendSocketMessage";
-import {
-  pushMessage,
-} from "../../redux/slices/ChatSlice";
+import { pushMessage } from "../../redux/slices/ChatSlice";
 import { useAppDispatch, useAppSelector } from "../../utils/reduxHooks";
 
 export default function WriteMessage({ wsClient }: { wsClient: WebSocket }) {
@@ -15,6 +13,10 @@ export default function WriteMessage({ wsClient }: { wsClient: WebSocket }) {
   function SendMessage(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Enter") {
       event.preventDefault();
+      if (wsClient instanceof WebSocket === false) {
+        console.log(false);
+        return;
+      }
       if (event.currentTarget.value.length < 1) return;
       try {
         const text = event.currentTarget.value;

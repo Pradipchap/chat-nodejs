@@ -31,6 +31,9 @@ export default function Chat() {
   const isCallOpen = useAppSelector((state) => state.call.callStatus);
   const videoCallers = useAppSelector((state) => state.call);
   const dispatch = useAppDispatch();
+  const secondaryChatter = useAppSelector(
+    (state) => state.chat.secondaryChatter
+  );
 
   // useEffect(() => {
   //   function handleConnection() {
@@ -219,7 +222,8 @@ export default function Chat() {
 
   return (
     <div className="relative bg-blue-950 min-h-screen flex-col flex justify-end">
-      <ChatBoxTopBar wsClient={wsClient} />
+      {/* <p className="text-white">asdfasd{secondaryChatter}</p> */}
+      <ChatBoxTopBar />
       <p className="text-white">{isCallOpen}</p>
       {/* {isCallOpen === "requesting" || isCallOpen == "incoming" ? (
         <CallIncomingOutgoing callStatus={isCallOpen} wsClient={wsClient} />

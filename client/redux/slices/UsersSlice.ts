@@ -1,5 +1,5 @@
+import { ChatterInterface } from "./../../interfaces/dataInterfaces";
 import {
-  ChatterInterface,
   FriendBoxInterface,
   UserFetchResults,
 } from "../../interfaces/dataInterfaces";
@@ -69,6 +69,28 @@ const USER_SLICE = createSlice({
       state.users = action.payload;
       state.loading = false;
     },
+    updateLatestMessage: (state, action) => {
+      const { messagerID, message, datetime } = action.payload;
+      console.log(messagerID, message);
+      state.chatters.forEach((element, index) => {
+        if (element.participantDetails._id === messagerID) {
+          console.log(element);
+          state.chatters.splice(index, 1);
+          state.chatters.splice(0, 0, {
+            _id: element._id,
+            combinedID: element.combinedID,
+            participantDetails: element.participantDetails,
+            latestMessage: {
+              message: message,
+              datetime: datetime,
+              _id: element.latestMessage?._id || "",
+              sender: element.latestMessage?.sender || "",
+            },
+          });
+          // delete state.chatters[index];
+        }
+      });
+    },
     updateChatters: (state, action) => {
       state.chatters = action.payload;
       state.loading = false;
@@ -106,5 +128,6 @@ export const {
   setError,
   updateFriends,
   updateFriendRequests,
+  updateLatestMessage,
 } = USER_SLICE.actions;
 export default USER_SLICE.reducer;

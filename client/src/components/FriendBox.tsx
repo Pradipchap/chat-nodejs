@@ -2,17 +2,25 @@ import { Link } from "react-router-dom";
 import { ChatterInterface } from "../../interfaces/dataInterfaces";
 import { useAppDispatch, useAppSelector } from "../../utils/reduxHooks";
 import { updateCurrentChatter } from "../../redux/slices/ChatSlice";
+import useDateDetails from "../../functions/useDateDetails";
 
 export default function FriendBox({
   participantDetails,
   latestMessage,
   _id,
 }: ChatterInterface) {
+  const timePassed = useDateDetails(
+    new Date(latestMessage?.datetime)
+  );
+
   const primaryChatter = useAppSelector((state) => state.currentUser.userID);
   const currentChat = useAppSelector((state) => state.chat);
-  const isActive = currentChat.secondaryChatter === participantDetails._id;
-  const dispatch = useAppDispatch();
 
+  const dispatch = useAppDispatch();
+  if (typeof _id === "undefined") {
+    return null;
+  }
+  const isActive = currentChat.secondaryChatter === participantDetails._id;
   function updateChatter() {
     dispatch(
       updateCurrentChatter({
@@ -53,9 +61,7 @@ export default function FriendBox({
             : {latestMessage?.message}
           </p>
           {latestMessage?.datetime && (
-            <p className="text-[10px]">
-              {new Date(latestMessage.datetime)?.toDateString() || "afds"}
-            </p>
+            <p className="text-[10px]">{timePassed}</p>
           )}
         </div>
       </div>

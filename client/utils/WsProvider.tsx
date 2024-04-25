@@ -1,52 +1,65 @@
-import React, { ReactNode, createContext, useEffect, useState } from "react";
-
-const WS_URL = "ws://localhost:3100";
-
+import {
+  ReactNode,
+  createContext,
+  useEffect,
+  useState,
+  useCallback,
+} from "react";
 import { useAppSelector } from "./reduxHooks";
 import { DetailsObjectInterface } from "../interfaces/dataInterfaces";
+import sendSocketMessage from "../functions/sendSocketMessage";
+
+const WS_URL = "ws://localhost:3100";
 
 export const WsContext = createContext();
 
 export default function WsProvider({ children }: { children: ReactNode }) {
   const userID = useAppSelector((state) => state.currentUser.userID);
-  const [wsClient, setWsClient] = useState<WebSocket>();
+  const { secondaryChatter } = useAppSelector((state) => state.chat);
+  const [wsClient, setWsClient] = useState<WebSocket | null>(null);
+
+  const handleConnection = (ws: WebSocket) => {
+    console.log("connection established", userID);
+    const otherBlob = new Blob(["sdfadfasdfasd"]);
+    if (ws.readyState !== WebSocket.OPEN) return;
+    try {
+      sendSocketMessage({
+        sender: userID,
+        receiver: userID,
+        type: "newUser",
+        wsClient: ws,
+        data: otherBlob,
+      });
+    } catch (error) {
+      console.log(error);
+    }
+    console.log("success");
+
+    console.log("ws initialized");
+  };
 
   useEffect(() => {
-    const ws = new WebSocket(WS_URL);
+    if (userID && secondaryChatter && !wsClient) {
+      const ws = new WebSocket(WS_URL);
+      ws.addEventListener("open", () => {
+        console.log("WebSocket connection established.");
+        setWsClient(ws);
+        handleConnection(ws);
+      });
+      ws.onclose = () => {
+        console.log("WebSocket connection closed.");
+        setWsClient(null);
+      };
+      ws.onerror = (error) => {
+        setWsClient(null);
+        console.error("WebSocket error:", error);
+      };
 
-    // Set up event listeners for WebSocket connection
-    ws.onopen = () => {
-      setWsClient(ws);
-      console.log("WebSocket connection established.");
-      function handleConnection() {
-        console.log("connection established", userID);
-        const detailsMessage: DetailsObjectInterface = {
-          type: "newUser",
-          sender: userID,
-          receiver: userID,
-        };
-        const detailsBlob = new Blob([JSON.stringify(detailsMessage)]);
-        const otherBlob = new Blob(["sdfadfasdfasd"]);
-        const combinedBlob = new Blob([detailsBlob, otherBlob]);
-        console.log("ws initialized");
-        ws.send(combinedBlob);
-      }
-      handleConnection();
-    };
-
-    ws.onclose = () => {
-      console.log("WebSocket connection closed.");
-    };
-
-    ws.onerror = (error) => {
-      console.error("WebSocket error:", error);
-    };
-
-    // Clean up WebSocket connection on unmount
-    return () => {
-      ws.close();
-    };
-  }, []); // This effect runs only once on component mount
+      return () => {
+        ws.close();
+      };
+    }
+  }, [userID, secondaryChatter]);
 
   return (
     <WsContext.Provider value={{ wsClient }}>{children}</WsContext.Provider>
