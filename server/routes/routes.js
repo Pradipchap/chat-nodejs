@@ -86,7 +86,7 @@ router.post("/chatters", authenticate, async (req, res) => {
         $project: {
           _id: 1,
           combinedID: 1,
-          latestMessage: { $arrayElemAt: ["$messages", -1] },
+          latestMessage: { $arrayElemAt: ["$messages", 0] },
           filteredParticipants: {
             $filter: {
               input: "$participants",

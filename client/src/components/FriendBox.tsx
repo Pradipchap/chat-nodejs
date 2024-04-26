@@ -3,15 +3,21 @@ import { ChatterInterface } from "../../interfaces/dataInterfaces";
 import { useAppDispatch, useAppSelector } from "../../utils/reduxHooks";
 import { updateCurrentChatter } from "../../redux/slices/ChatSlice";
 import useDateDetails from "../../functions/useDateDetails";
+import { useEffect } from "react";
 
 export default function FriendBox({
   participantDetails,
   latestMessage,
   _id,
 }: ChatterInterface) {
+  console.log(latestMessage);
   const timePassed = useDateDetails(
-    new Date(latestMessage?.datetime)
+    new Date(latestMessage?.datetime) || new Date()
   );
+
+  useEffect(() => {
+    console.log("rerendering");
+  }, []);
 
   const primaryChatter = useAppSelector((state) => state.currentUser.userID);
   const currentChat = useAppSelector((state) => state.chat);

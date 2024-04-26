@@ -58,7 +58,11 @@ function App() {
               dispatch(pushMessage([{ message: message, isReceiver: true }]));
             }
             dispatch(
-              updateLatestMessage({ message, messagerID: details.sender,datetime:new Date() })
+              updateLatestMessage({
+                message,
+                messagerID: details.sender,
+                datetime: new Date().toISOString(),
+              })
             );
           }
           break;
@@ -71,7 +75,7 @@ function App() {
               return {
                 message: item.message,
                 isReceiver,
-                time: item.datetime,
+                time: new Date(item.datetime),
                 id: item._id,
               };
             });

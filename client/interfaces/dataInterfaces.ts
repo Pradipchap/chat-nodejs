@@ -16,7 +16,7 @@ export interface ChatsDataInterface {
     message: string;
     sender: string;
     _id: string;
-    datetime: string;
+    datetime: Date;
   }[];
 }
 
@@ -27,7 +27,7 @@ export interface ChatterInterface {
     message: string;
     sender: string;
     _id: string;
-    datetime: Date;
+    datetime: string;
   };
   participantDetails: {
     _id: string;
