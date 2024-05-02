@@ -3,7 +3,6 @@ import {
   createContext,
   useEffect,
   useState,
-  useCallback,
 } from "react";
 import { useAppSelector } from "./reduxHooks";
 import { DetailsObjectInterface } from "../interfaces/dataInterfaces";
@@ -15,7 +14,6 @@ export const WsContext = createContext();
 
 export default function WsProvider({ children }: { children: ReactNode }) {
   const userID = useAppSelector((state) => state.currentUser.userID);
-  const { secondaryChatter } = useAppSelector((state) => state.chat);
   const [wsClient, setWsClient] = useState<WebSocket | null>(null);
 
   const handleConnection = (ws: WebSocket) => {
@@ -39,7 +37,7 @@ export default function WsProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    if (userID && secondaryChatter && !wsClient) {
+    if (userID && wsClient instanceof WebSocket === false) {
       const ws = new WebSocket(WS_URL);
       ws.addEventListener("open", () => {
         console.log("WebSocket connection established.");
@@ -59,7 +57,7 @@ export default function WsProvider({ children }: { children: ReactNode }) {
         ws.close();
       };
     }
-  }, [userID, secondaryChatter]);
+  }, [userID]);
 
   return (
     <WsContext.Provider value={{ wsClient }}>{children}</WsContext.Provider>

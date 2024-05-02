@@ -70,7 +70,7 @@ router.post("/chatters", authenticate, async (req, res) => {
       { $unwind: "$conversation" },
       // Sort the conversations by updatedAt timestamp in descending order
       { $sort: { "conversation.updatedAt": -1 } },
-      { $skip:  pageNo*limitingNumber}, // Skip the first N results (for pagination)
+      { $skip: pageNo * limitingNumber }, // Skip the first N results (for pagination)
       { $limit: limitingNumber },
       // Group the conversations by combinedID to remove duplicates
       {
@@ -84,9 +84,6 @@ router.post("/chatters", authenticate, async (req, res) => {
       // Project to include only the latest message
       {
         $project: {
-          _id: 1,
-          combinedID: 1,
-          latestMessage: { $arrayElemAt: ["$messages", 0] },
           filteredParticipants: {
             $filter: {
               input: "$participants",
@@ -97,9 +94,52 @@ router.post("/chatters", authenticate, async (req, res) => {
         },
       },
       {
+        $project: {
+          _id: 1,
+          chatterID: { $arrayElemAt: ["$filteredParticipants", 0] }, // Extract the first (and only) element from the array
+        },
+      },
+    ]);
+
+    return res.json({ users: result });
+  } catch (error) {
+    res.status(200).json({
+      error: {
+        errorMessage: error,
+      },
+    });
+  }
+});
+
+router.post("/getChatter", authenticate, async (req, res) => {
+  try {
+    const userID = req.body.userID;
+    const requestID = req.body.requestID;
+    await connectToDB();
+    console.log(userID);
+
+    const combinedID = getCombinedId(userID, requestID);
+
+    const results = await Convo.aggregate([
+      { $match: { combinedID } },
+      {
+        $project: {
+          _id: 1,
+          combinedID: 1,
+          latestMessage: { $arrayElemAt: ["$messages", 0] },
+          chatterID: {
+            $filter: {
+              input: "$participants",
+              as: "participant",
+              cond: { $eq: ["$$participant", new ObjectId(requestID)] },
+            },
+          },
+        },
+      },
+      {
         $lookup: {
           from: "users",
-          localField: "filteredParticipants",
+          localField: "chatterID",
           foreignField: "_id",
           as: "participantDetails",
         },
@@ -113,8 +153,8 @@ router.post("/chatters", authenticate, async (req, res) => {
         },
       },
     ]);
-
-    return res.json({ users: result });
+    console.log("result are",results)
+    return res.json( results[0] );
   } catch (error) {
     res.status(200).json({
       error: {
@@ -137,14 +177,12 @@ router.post("/user", authenticate, async (req, res) => {
       }
     ).populate({ path: "friends.userID" });
     if (isFriend) {
-      return res
-        .status(200)
-        .json({
-          isFriend: true,
-          hasIGotRequest: false,
-          hasISentRequest: false,
-          userDetails: isFriend.friends[0].userID,
-        });
+      return res.status(200).json({
+        isFriend: true,
+        hasIGotRequest: false,
+        hasISentRequest: false,
+        userDetails: isFriend.friends[0].userID,
+      });
       return;
     }
     const hasIGotRequest = await FriendRequests.findOne(
@@ -154,14 +192,12 @@ router.post("/user", authenticate, async (req, res) => {
       }
     ).populate({ path: "friendRequests" });
     if (hasIGotRequest) {
-      return res
-        .status(200)
-        .json({
-          isFriend: false,
-          hasIGotRequest: true,
-          hasISentRequest: false,
-          userDetails: hasIGotRequest.friendRequests[0],
-        });
+      return res.status(200).json({
+        isFriend: false,
+        hasIGotRequest: true,
+        hasISentRequest: false,
+        userDetails: hasIGotRequest.friendRequests[0],
+      });
       return;
     }
     const hasISentRequest = await FriendRequests.findOne(
@@ -171,25 +207,21 @@ router.post("/user", authenticate, async (req, res) => {
       }
     ).populate("userID");
     if (hasISentRequest) {
-      return res
-        .status(200)
-        .json({
-          isFriend: false,
-          hasIGotRequest: false,
-          hasISentRequest: true,
-          userDetails: hasISentRequest.userID,
-        });
+      return res.status(200).json({
+        isFriend: false,
+        hasIGotRequest: false,
+        hasISentRequest: true,
+        userDetails: hasISentRequest.userID,
+      });
       return;
     }
     const userDetails = await User.findById(requestUserID);
-    return res
-      .status(200)
-      .json({
-        isFriend: false,
-        userDetails,
-        hasIGotRequest: false,
-        hasISentRequest: false,
-      });
+    return res.status(200).json({
+      isFriend: false,
+      userDetails,
+      hasIGotRequest: false,
+      hasISentRequest: false,
+    });
     return;
   } catch (error) {
     res.status(500).json({
@@ -231,7 +263,7 @@ router.post("/confirmRequest", authenticate, async (req, res) => {
     const ConvoDetails = await Convo.create({
       combinedID: combinedID,
       messages: [],
-      participants: [new ObjectId(userID),new ObjectId(requestID)],
+      participants: [new ObjectId(userID), new ObjectId(requestID)],
     });
     console.log("convo is", ConvoDetails);
     await Friends.updateOne(
@@ -356,6 +388,7 @@ router.post("/friends", authenticate, async (req, res) => {
     console.log("user ID is", userID);
     const pageNo = (req.query.pageNo || 1) - 1;
     const limitingNumber = 10;
+    console.log("page is", pageNo);
     await connectToDB();
     const result = await Friends.aggregate([
       { $match: { userID: new ObjectId(userID) } },
@@ -373,20 +406,21 @@ router.post("/friends", authenticate, async (req, res) => {
           as: "populatedFriends",
         },
       },
-      {
-        $addFields: {
-          friends: [{ $arrayElemAt: ["$populatedFriends", 0] }],
-        },
-      },
+      // {
+      //   $addFields: {
+      //     friends: [{ $arrayElemAt: ["$populatedFriends", 0] }],
+      //   },
+      // },
       {
         $project: {
           "friends.userID": 0,
-          populatedFriends: 0,
+          // friends: 0,
         },
       },
     ]);
+    console.log(result[0]);
     return res.json({
-      users: result[0].friends,
+      users: result[0].populatedFriends,
       noOfUsers: result[0].totalFriends,
     });
   } catch (error) {
@@ -404,7 +438,7 @@ router.post("/deleteFriend", authenticate, async (req, res) => {
     const friendID = req.body.friendID;
     const combinedID = getCombinedId(userID, friendID);
     await connectToDB();
-    await Convo.deleteOne({combinedID})
+    await Convo.deleteOne({ combinedID });
     await Friends.updateOne(
       { userID },
       { $pull: { friends: { userID: friendID } } }
@@ -481,7 +515,7 @@ router.post("/register", async (req, res) => {
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const x = Math.ceil((Math.random() + 0.1) * 1000000).toString();
-    const verificationCode=x.slice(0,6)
+    const verificationCode = x.slice(0, 6);
     const hashedCode = await bcrypt.hash(verificationCode.toString(), 10);
     await sendMail({
       to: email,

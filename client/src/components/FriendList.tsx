@@ -19,7 +19,7 @@ export default function FriendList() {
           <p>No users</p>
         ) : (
           users.map((element: ChatterInterface) => {
-            return <FriendBox {...element} />;
+            return <FriendBox key={element._id} {...element} />;
           })
         )}
       </div>

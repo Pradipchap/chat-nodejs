@@ -11,7 +11,6 @@ import ChatMessage from "./ChatMessage";
 import sendSocketMessage from "../../functions/sendSocketMessage";
 import { useParams } from "react-router-dom";
 import { WsContext } from "../../utils/WsProvider";
-import Icon from "./Icon";
 
 export default function ChatMessageArea() {
   const { wsClient } = useContext(WsContext);
@@ -31,6 +30,9 @@ export default function ChatMessageArea() {
 
   useEffect(() => {
     function getChats() {
+      console.log('retrieving')
+      console.log(secondaryChatter)
+      console.log(wsClient)
       sendSocketMessage({
         sender: userID,
         receiver: secondaryChatter || "",
@@ -46,6 +48,9 @@ export default function ChatMessageArea() {
       wsClient instanceof WebSocket
     )
       getChats();
+      else{
+        console.log(isWsReady,userID,secondaryChatter,wsClient instanceof WebSocket)
+      }
   }, [userID, isWsReady, secondaryChatter, page, wsClient]);
 
   // useEffect(() => {
@@ -89,7 +94,10 @@ export default function ChatMessageArea() {
         <Icon name="Loading" className="animate-spin" />
       </div> */}
       {currentChats.length > 10 && (
-        <button className=" self-center bg-red-800 rounded-full px-3 py-1 text-white w-max border border-red-900">
+        <button
+          onClick={() => setPage((page) => page + 1)}
+          className=" self-center bg-red-800 rounded-full px-3 py-1 text-white w-max border border-red-900"
+        >
           older
         </button>
       )}

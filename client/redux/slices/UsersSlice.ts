@@ -44,8 +44,9 @@ export const fetchChatters = createAsyncThunk(
           Authorization: "Bearer" + " " + accessToken,
         },
       });
-      const results: { users: ChatterInterface[] } = await response.json();
-      dispatch(updateSecondaryChatter(results.users[0].participantDetails._id));
+      const results = await response.json();
+      dispatch(updateSecondaryChatter(results.users[0].chatterID));
+      console.log(results.users);
       return results.users;
     } catch (error) {
       console.log(error);
@@ -70,24 +71,19 @@ const USER_SLICE = createSlice({
       state.loading = false;
     },
     updateLatestMessage: (state, action) => {
-      const { messagerID, message, datetime } = action.payload;
+      const { messagerID, message, datetime, whoMessaged } = action.payload;
       console.log(messagerID, message);
       state.chatters.forEach((element, index) => {
-        if (element.participantDetails._id === messagerID) {
+        if (element.chatterID === messagerID) {
           console.log(element);
           state.chatters.splice(index, 1);
           state.chatters.splice(0, 0, {
             _id: element._id,
-            combinedID: element.combinedID,
-            participantDetails: element.participantDetails,
-            latestMessage: {
-              message: message,
-              datetime: datetime,
-              _id: element.latestMessage?._id || "",
-              sender: element.latestMessage?.sender || "",
-            },
+            chatterID: element.chatterID,
+            message,
+            whoMessaged,
+            datetime,
           });
-          // delete state.chatters[index];
         }
       });
     },

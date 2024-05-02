@@ -22,6 +22,14 @@ export interface ChatsDataInterface {
 
 export interface ChatterInterface {
   _id: string;
+  chatterID: string;
+  message?: string;
+  whoMessaged?: string;
+  datetime?: string;
+}
+
+export interface ChatterDetailsInterface {
+  _id: string;
   combinedID: string;
   latestMessage?: {
     message: string;
@@ -37,6 +45,7 @@ export interface ChatterInterface {
     __v: number;
   };
 }
+
 export interface UserFetchResults {
   users: FriendBoxInterface[];
   noOfUser: number;

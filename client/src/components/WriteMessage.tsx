@@ -2,19 +2,20 @@ import { useParams } from "react-router-dom";
 import sendSocketMessage from "../../functions/sendSocketMessage";
 import { pushMessage } from "../../redux/slices/ChatSlice";
 import { useAppDispatch, useAppSelector } from "../../utils/reduxHooks";
+import { updateLatestMessage } from "../../redux/slices/UsersSlice";
 
 export default function WriteMessage({ wsClient }: { wsClient: WebSocket }) {
   const chatter = useAppSelector((state) => state.chat);
   const dispatch = useAppDispatch();
-  const primaryChatter = chatter.primaryChatter;
+  const primaryChatter =useAppSelector(state=>state.currentUser.userID);
   const params = useParams();
   const secondaryChatter = params.chatterID;
 
   function SendMessage(event: React.KeyboardEvent<HTMLInputElement>) {
     if (event.key === "Enter") {
       event.preventDefault();
-      if (wsClient instanceof WebSocket === false) {
-        console.log(false);
+      if (wsClient instanceof WebSocket === false||primaryChatter===""||secondaryChatter==="") {
+        console.log(false,secondaryChatter);
         return;
       }
       if (event.currentTarget.value.length < 1) return;
@@ -30,6 +31,14 @@ export default function WriteMessage({ wsClient }: { wsClient: WebSocket }) {
           data: nextBlob,
         });
         event.currentTarget.value = "";
+        dispatch(
+          updateLatestMessage({
+            message: text,
+            messagerID: secondaryChatter,
+            whoMessaged:primaryChatter,
+            datetime: new Date().toISOString(),
+          })
+        );
       } catch (error) {
         console.log("error is ", error);
       }

@@ -5,8 +5,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Signup from "./sections/Signup.tsx";
 import AuthenticatedRoute from "./AuthenticatedRoute.tsx";
 import VideoComponent from "./components/VideoComponent.tsx";
-import { lazy, Suspense, useContext, useEffect } from "react";
-import Map from "./sections/Map.tsx";
+import { lazy, Suspense, useContext, useEffect, useMemo } from "react";
 import Friends from "./sections/Friends.tsx";
 import FriendsGroup from "./sections/FriendsGroup.tsx";
 import Loading from "./components/Loading.tsx";
@@ -30,17 +29,24 @@ const AddFriends = lazy(async () => import(".//sections/AddFriends.tsx"));
 const FriendRequests = lazy(async () =>
   import("./sections/FriendRequests.tsx")
 );
+import useSound from "../customHooks/useSound.ts";
+import MessageTone from "./assets/messageTone.mp3";
 
 function App() {
   const { wsClient } = useContext(WsContext);
   const currentUser = useAppSelector((state) => state.currentUser);
-  const { secondaryChatter } = useAppSelector((state) => state.chat);
+  const secondaryChatter = useAppSelector(
+    (state) => state.chat.secondaryChatter
+  );
+  const primaryChatter = currentUser.userID;
   const dispatch = useAppDispatch();
+  const [play, pause] = useSound(MessageTone);
 
   useEffect(() => {
     async function handleMessage(connection: MessageEvent<any>) {
       const { message, details } = await getSocketData(connection.data);
       console.log(secondaryChatter);
+      console.log(primaryChatter);
       switch (details.type) {
         case "newUser": {
           console.log("new user");
@@ -51,17 +57,19 @@ function App() {
           {
             console.log(message);
             console.log("dispatching");
-            console.log(details.sender, secondaryChatter);
+            console.log(details.sender + " " + secondaryChatter);
             if (details.sender === secondaryChatter) {
               console.log(message);
               console.log("dispatching");
               dispatch(pushMessage([{ message: message, isReceiver: true }]));
+            } else {
+              play();
             }
             dispatch(
               updateLatestMessage({
                 message,
                 messagerID: details.sender,
-                datetime: new Date().toISOString(),
+                datetime: new Date().toString(),
               })
             );
           }
@@ -80,6 +88,7 @@ function App() {
               };
             });
             const reversedChats = finalChats.reverse();
+            console.log(reversedChats);
             if (chat.page === 1) dispatch(updateChats(reversedChats));
             else dispatch(pushChat(reversedChats));
           }
@@ -91,7 +100,12 @@ function App() {
     }
     if (wsClient instanceof WebSocket)
       wsClient.addEventListener("message", handleMessage);
-  }, [wsClient]);
+    return () => {
+      if (wsClient instanceof WebSocket) {
+        wsClient.removeEventListener("message", handleMessage);
+      }
+    };
+  }, [wsClient, secondaryChatter]);
 
   const router = createBrowserRouter([
     {
