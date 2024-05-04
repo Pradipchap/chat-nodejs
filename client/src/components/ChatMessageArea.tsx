@@ -53,6 +53,11 @@ export default function ChatMessageArea() {
       }
   }, [userID, isWsReady, secondaryChatter, page, wsClient]);
 
+  useEffect(() => {
+    console.log(wsClient)
+  }, [wsClient])
+  
+
   // useEffect(() => {
   //   function onIntersection(entries: IntersectionObserverEntry[]) {
   //     if (entries.length > 0) {

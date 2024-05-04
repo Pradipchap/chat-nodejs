@@ -1,9 +1,4 @@
-import {
-  ReactNode,
-  createContext,
-  useEffect,
-  useState,
-} from "react";
+import { ReactNode, createContext, useEffect, useState } from "react";
 import { useAppSelector } from "./reduxHooks";
 import { DetailsObjectInterface } from "../interfaces/dataInterfaces";
 import sendSocketMessage from "../functions/sendSocketMessage";
@@ -37,25 +32,36 @@ export default function WsProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    if (userID && wsClient instanceof WebSocket === false) {
+    console.log(userID);
+  }, [userID]);
+
+  useEffect(() => {
+    // if (userID) {
+    function connectToSocket() {
       const ws = new WebSocket(WS_URL);
       ws.addEventListener("open", () => {
         console.log("WebSocket connection established.");
         setWsClient(ws);
         handleConnection(ws);
       });
-      ws.onclose = () => {
-        console.log("WebSocket connection closed.");
+      ws.onclose = (event) => {
+        console.log("WebSocket connection closed.", event);
         setWsClient(null);
       };
       ws.onerror = (error) => {
         setWsClient(null);
         console.error("WebSocket error:", error);
+        setTimeout(connectToSocket, 3000);
       };
 
-      return () => {
-        ws.close();
-      };
+      return ws;
+    }
+    if (userID) {
+      const ws = connectToSocket();
+      if (wsClient instanceof WebSocket)
+        return () => {
+          ws.close();
+        };
     }
   }, [userID]);
 
