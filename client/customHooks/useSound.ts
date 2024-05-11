@@ -24,5 +24,5 @@ export default function useSound(url: string) {
     };
   }, []);
 
-  return [play, pause];
+  return [play, pause,isPlaying];
 }

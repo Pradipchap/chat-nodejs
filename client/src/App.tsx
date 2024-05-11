@@ -5,7 +5,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import Signup from "./sections/Signup.tsx";
 import AuthenticatedRoute from "./AuthenticatedRoute.tsx";
 import VideoComponent from "./components/VideoComponent.tsx";
-import { lazy, Suspense, useContext, useEffect, useMemo } from "react";
+import { lazy, Suspense, useContext, useEffect } from "react";
 import Friends from "./sections/Friends.tsx";
 import FriendsGroup from "./sections/FriendsGroup.tsx";
 import Loading from "./components/Loading.tsx";
@@ -64,6 +64,7 @@ function App() {
               dispatch(pushMessage([{ message: message, isReceiver: true }]));
             } else {
               play();
+              pause();
             }
             dispatch(
               updateLatestMessage({

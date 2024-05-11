@@ -762,5 +762,6 @@ router.post("/changePassword", async (req, res) => {
 
 router.get("/",async(req,res)=>{
   res.json({message:"Hello world"})
+  console.log(first)
 });
 module.exports = router;

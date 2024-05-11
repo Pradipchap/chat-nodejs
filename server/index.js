@@ -20,8 +20,7 @@ const server = http.createServer(app);
 
 const wsServer = new WebSocketServer({ server });
 
-server.listen(port, (req, res) => {
-  res.json({message:"server started"})
+server.listen(port, async(req, res) => {
   console.log(`server started at http://}`);
 });
 
