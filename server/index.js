@@ -21,6 +21,7 @@ const server = http.createServer(app);
 const wsServer = new WebSocketServer({ server });
 
 server.listen(port, (req, res) => {
+  res.json("server started")
   console.log(`server started at http://}`);
 });
 
