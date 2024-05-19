@@ -21,17 +21,18 @@ router.use(cookieParser());
 
 router.post("/users", authenticate, async (req, res) => {
   try {
-    const userID = req.body.userID;
-    const pageNo = (req.query.pageNo || 1) - 1;
+    // const userID = req.body.userID;
+    // const pageNo = (req.query.pageNo || 1) - 1;
+    const pageNo=1
     const limitingNumber = 10;
     await connectToDB();
     const noOfUsers = await User.estimatedDocumentCount();
-    console.log("no of users", noOfUsers);
-    const users = await User.find({ _id: { $ne: new ObjectId(userID) } })
-      .limit(limitingNumber)
-      .skip(pageNo * limitingNumber);
+    // console.log("no of users", noOfUsers);
+    // const users = await User.find({ _id: { $ne: new ObjectId(userID) } })
+    //   .limit(limitingNumber)
+    //   .skip(pageNo * limitingNumber);
     res.status(200).json({
-      users,
+      // users,
       noOfUsers: noOfUsers - 1,
     });
   } catch (error) {
