@@ -19,7 +19,7 @@ const Convo = require("../models/ConvoModel");
 
 router.use(cookieParser());
 
-router.post("/users", authenticate, async (req, res) => {
+router.get("/users", authenticate, async (req, res) => {
   try {
     // const userID = req.body.userID;
     // const pageNo = (req.query.pageNo || 1) - 1;
