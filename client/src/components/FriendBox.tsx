@@ -18,7 +18,7 @@ export default function FriendBox({
   whoMessaged,
   datetime,
 }: ChatterInterface) {
-  const { wsClient } = useContext(WsContext);
+  const wsClient  = useContext(WsContext);
 
   const { userID: primaryChatter, accessToken } = useAppSelector(
     (state) => state.currentUser

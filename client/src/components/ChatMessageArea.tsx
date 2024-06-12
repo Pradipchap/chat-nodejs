@@ -13,7 +13,7 @@ import { useParams } from "react-router-dom";
 import { WsContext } from "../../utils/WsProvider";
 
 export default function ChatMessageArea() {
-  const { wsClient } = useContext(WsContext);
+  const wsClient = useContext(WsContext);
   const currentChats = useAppSelector((state) => state.chat.chats);
   const params = useParams();
   const userID = useAppSelector((state) => state.currentUser.userID);

@@ -5,7 +5,6 @@ import { useAppDispatch, useAppSelector } from "../../utils/reduxHooks";
 import { updateLatestMessage } from "../../redux/slices/UsersSlice";
 
 export default function WriteMessage({ wsClient }: { wsClient: WebSocket }) {
-  const chatter = useAppSelector((state) => state.chat);
   const dispatch = useAppDispatch();
   const primaryChatter =useAppSelector(state=>state.currentUser.userID);
   const params = useParams();

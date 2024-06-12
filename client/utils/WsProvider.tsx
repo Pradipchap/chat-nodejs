@@ -1,11 +1,10 @@
 import { ReactNode, createContext, useEffect, useState } from "react";
 import { useAppSelector } from "./reduxHooks";
-import { DetailsObjectInterface } from "../interfaces/dataInterfaces";
 import sendSocketMessage from "../functions/sendSocketMessage";
 
 const WS_URL = "ws://localhost:3100";
 
-export const WsContext = createContext();
+export const WsContext = createContext<null | WebSocket>(null);
 
 export default function WsProvider({ children }: { children: ReactNode }) {
   const userID = useAppSelector((state) => state.currentUser.userID);
@@ -44,7 +43,7 @@ export default function WsProvider({ children }: { children: ReactNode }) {
         setWsClient(ws);
         handleConnection(ws);
       });
-      ws.onclose = (event) => {
+      ws.onclose = () => {
         //console.log("WebSocket connection closed.", event);
         setWsClient(null);
       };
@@ -65,7 +64,5 @@ export default function WsProvider({ children }: { children: ReactNode }) {
     }
   }, [userID]);
 
-  return (
-    <WsContext.Provider value={{ wsClient }}>{children}</WsContext.Provider>
-  );
+  return <WsContext.Provider value={wsClient}>{children}</WsContext.Provider>;
 }
