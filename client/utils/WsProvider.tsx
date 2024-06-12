@@ -12,7 +12,7 @@ export default function WsProvider({ children }: { children: ReactNode }) {
   const [wsClient, setWsClient] = useState<WebSocket | null>(null);
 
   const handleConnection = (ws: WebSocket) => {
-    console.log("connection established", userID);
+    //console.log("connection established", userID);
     const otherBlob = new Blob(["sdfadfasdfasd"]);
     if (ws.readyState !== WebSocket.OPEN) return;
     try {
@@ -24,15 +24,15 @@ export default function WsProvider({ children }: { children: ReactNode }) {
         data: otherBlob,
       });
     } catch (error) {
-      console.log(error);
+      //console.log(error);
     }
-    console.log("success");
+    //console.log("success");
 
-    console.log("ws initialized");
+    //console.log("ws initialized");
   };
 
   useEffect(() => {
-    console.log(userID);
+    //console.log(userID);
   }, [userID]);
 
   useEffect(() => {
@@ -40,12 +40,12 @@ export default function WsProvider({ children }: { children: ReactNode }) {
     function connectToSocket() {
       const ws = new WebSocket(WS_URL);
       ws.addEventListener("open", () => {
-        console.log("WebSocket connection established.");
+        //console.log("WebSocket connection established.");
         setWsClient(ws);
         handleConnection(ws);
       });
       ws.onclose = (event) => {
-        console.log("WebSocket connection closed.", event);
+        //console.log("WebSocket connection closed.", event);
         setWsClient(null);
       };
       ws.onerror = (error) => {

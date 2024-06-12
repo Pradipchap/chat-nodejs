@@ -37,7 +37,7 @@ export default function Chat() {
 
   // useEffect(() => {
   //   function handleConnection() {
-  //     console.log("connection established", userID);
+  //     //console.log("connection established", userID);
   //     const detailsMessage: DetailsObjectInterface = {
   //       type: "newUser",
   //       sender: userID,
@@ -46,7 +46,7 @@ export default function Chat() {
   //     const detailsBlob = new Blob([JSON.stringify(detailsMessage)]);
   //     const otherBlob = new Blob(["sdfadfasdfasd"]);
   //     const combinedBlob = new Blob([detailsBlob, otherBlob]);
-  //     console.log("ws initialized");
+  //     //console.log("ws initialized");
   //     wsClient.send(combinedBlob);
   //   }
   //   wsClient.addEventListener("open", handleConnection);
@@ -56,7 +56,7 @@ export default function Chat() {
 
   // useEffect(() => {
   //   async function handleMessage(connection: MessageEvent<any>) {
-  //     console.log("message got", connection.data);
+  //     //console.log("message got", connection.data);
   //     const { message, details } = await getSocketData(connection.data);
   //     switch (details.type) {
   //       case "callGoi": {
@@ -64,18 +64,18 @@ export default function Chat() {
   //       }
   //       case "callInc":
   //         {
-  //           console.log("incoming");
+  //           //console.log("incoming");
   //           if (isCallOpen === "ended") {
-  //             console.log("call ended");
+  //             //console.log("call ended");
   //             dispatch(closeCall());
   //             return;
   //           } else if (isCallOpen === "accepted" || isCallOpen === "ongoing") {
   //             return;
   //           } else {
   //             const callerData: FriendBoxInterface = JSON.parse(message);
-  //             console.log(callerData);
-  //             console.log(details.sender);
-  //             console.log(userID);
+  //             //console.log(callerData);
+  //             //console.log(details.sender);
+  //             //console.log(userID);
   //             if (details.sender !== videoCallers.secondaryChatter) {
   //               dispatch(
   //                 updateCallDetails({
@@ -102,7 +102,7 @@ export default function Chat() {
   //       case "callRej":
   //         {
   //           dispatch(closeCall());
-  //           console.log("call rejected");
+  //           //console.log("call rejected");
   //           setTimeout(() => {
   //             sendSocketMessage({
   //               sender: userID,
@@ -116,27 +116,27 @@ export default function Chat() {
   //         break;
   //       case "callEnd":
   //         {
-  //           console.log("call ending");
+  //           //console.log("call ending");
   //           dispatch(closeCall());
   //         }
   //         break;
   //       case "callTmo":
   //         {
-  //           console.log("call ending");
+  //           //console.log("call ending");
   //           dispatch(closeCall());
   //         }
   //         break;
   //       case "message": {
   //         break;
-  //         // console.log(message);
-  //         // console.log("dispatching");
+  //         // //console.log(message);
+  //         // //console.log("dispatching");
   //         // if (details.sender === secondaryChatter)
   //         //   dispatch(pushMessage([{ message: message, isReceiver: true }]));
   //       }
   //       case "getMess":
   //         {
   //           // const chat: { page: number; messages: [] } = JSON.parse(message);
-  //           // console.log("sdf", chat);
+  //           // //console.log("sdf", chat);
   //           // const finalChats = chat.messages.map((item) => {
   //           //   const isReceiver = item.sender !== userID;
   //           //   return {
@@ -146,8 +146,8 @@ export default function Chat() {
   //           //     id: item._id,
   //           //   };
   //           // });
-  //           // console.log("finalchats", finalChats);
-  //           // console.log(chat.page);
+  //           // //console.log("finalchats", finalChats);
+  //           // //console.log(chat.page);
   //           // if (chat.page === 1) dispatch(updateChats(finalChats));
   //           // else dispatch(pushChat(finalChats));
   //         }
@@ -187,7 +187,7 @@ export default function Chat() {
 
   // useEffect(() => {
   //   async function getUserMedia() {
-  //     console.log("first");
+  //     //console.log("first");
   //     try {
   //       navigator.mediaDevices
   //         .getUserMedia({
@@ -200,7 +200,7 @@ export default function Chat() {
   //             const recorder = new MediaRecorder(stream);
   //             recorder.ondataavailable = (event) => {
   //               // videoRef.current.src=new URL.createObjectURL(event.data)
-  //               console.log(event.data);
+  //               //console.log(event.data);
   //               sendSocketMessage({
   //                 sender: userID,
   //                 receiver: videoCallers.secondaryChatter,
@@ -214,7 +214,7 @@ export default function Chat() {
   //         });
   //     } catch (error) {
   //       dispatch(closeCall());
-  //       console.log(error);
+  //       //console.log(error);
   //     }
   //   }
   //   if (isCallOpen === "ongoing") getUserMedia();

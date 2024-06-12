@@ -29,10 +29,10 @@ export default function ChatBoxTopBar() {
   //         wsClient: wsClient,
   //       });
 
-  //       console.log(counter.current);
+  //       //console.log(counter.current);
 
   //       if (counter.current >= 10) {
-  //         console.log("first");
+  //         //console.log("first");
   //         clearInterval(interval);
   //         setTimeout(() => {
   //           dispatch(closeCall());

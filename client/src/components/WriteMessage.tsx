@@ -15,7 +15,7 @@ export default function WriteMessage({ wsClient }: { wsClient: WebSocket }) {
     if (event.key === "Enter") {
       event.preventDefault();
       if (wsClient instanceof WebSocket === false||primaryChatter===""||secondaryChatter==="") {
-        console.log(false,secondaryChatter);
+        //console.log(false,secondaryChatter);
         return;
       }
       if (event.currentTarget.value.length < 1) return;
@@ -40,7 +40,7 @@ export default function WriteMessage({ wsClient }: { wsClient: WebSocket }) {
           })
         );
       } catch (error) {
-        console.log("error is ", error);
+        //console.log("error is ", error);
       }
     } else {
       return;

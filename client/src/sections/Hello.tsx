@@ -8,7 +8,7 @@ export default function Hello() {
   // const { location } = useGetLocaion(setPostion);
 
   useEffect(() => {
-    console.log(position);
+    //console.log(position);
   }, [position]);
   const betweenPoints = [
     {
@@ -45,7 +45,7 @@ export default function Hello() {
     let a = 0;
     const interval = setInterval(() => {
       a = a + 1;
-      console.log(a);
+      //console.log(a);
       if (a >= betweenPoints.length - 1) {
         clearInterval(interval);
         return;

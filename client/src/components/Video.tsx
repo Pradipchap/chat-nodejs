@@ -8,7 +8,7 @@ export default function Video() {
   const wsClient = new WebSocket("ws://localhost:3100");
   const previewRef = useRef<HTMLVideoElement>(null);
   async function getUserMedia() {
-    console.log("first");
+    //console.log("first");
     const recording = document.getElementById("recording");
     try {
       navigator.mediaDevices
@@ -22,7 +22,7 @@ export default function Video() {
           }
         });
     } catch (error) {
-      console.log(error);
+      //console.log(error);
     }
   }
 

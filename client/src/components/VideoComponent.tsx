@@ -19,20 +19,20 @@ export default function VideoComponent({ wsClient }: { wsClient: WebSocket }) {
 
   useEffect(() => {
     async function handleMessage(connection: MessageEvent<any>) {
-      console.log("message got", connection.data);
+      //console.log("message got", connection.data);
       const parsedData: DetailsObjectInterface = JSON.parse(
         await connection.data.slice(0, 92).text()
       );
-      console.log(parsedData);
+      //console.log(parsedData);
       const messageBlob = await connection.data.slice(92);
-      console.log(await messageBlob.text());
+      //console.log(await messageBlob.text());
 
       switch (parsedData.type) {
         case "callGoi": {
           if (callStatus === "ended") {
             return;
           } else {
-            console.log("sadf");
+            //console.log("sadf");
             blobArray.push(messageBlob);
             if (callStatus !== "ongoing") dispatch(startCall());
             const currentTime = videoRef.current?.currentTime;
@@ -54,7 +54,7 @@ export default function VideoComponent({ wsClient }: { wsClient: WebSocket }) {
 
   useEffect(() => {
     async function getUserMedia() {
-      console.log("first");
+      //console.log("first");
       try {
         navigator.mediaDevices
           .getUserMedia({
@@ -67,7 +67,7 @@ export default function VideoComponent({ wsClient }: { wsClient: WebSocket }) {
               const recorder = new MediaRecorder(stream);
               recorder.ondataavailable = (event) => {
                 // videoRef.current.src=new URL.createObjectURL(event.data)
-                console.log(event.data);
+                //console.log(event.data);
                 sendSocketMessage({
                   sender: userID,
                   receiver: secondaryChatter,
@@ -81,7 +81,7 @@ export default function VideoComponent({ wsClient }: { wsClient: WebSocket }) {
           });
       } catch (error) {
         dispatch(closeCall());
-        console.log(error);
+        //console.log(error);
       }
     }
     if (callStatus === "ongoing") getUserMedia();

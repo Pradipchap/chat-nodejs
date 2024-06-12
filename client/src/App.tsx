@@ -22,8 +22,14 @@ import {
   pushMessage,
   updateChats,
 } from "../redux/slices/ChatSlice.ts";
-import { ChatsDataInterface } from "../interfaces/dataInterfaces.ts";
-import { updateLatestMessage } from "../redux/slices/UsersSlice.ts";
+import {
+  ChatsDataInterface,
+  ChatterInterface,
+} from "../interfaces/dataInterfaces.ts";
+import {
+  updateChatters,
+  updateLatestMessage,
+} from "../redux/slices/UsersSlice.ts";
 
 const AddFriends = lazy(async () => import(".//sections/AddFriends.tsx"));
 const FriendRequests = lazy(async () =>
@@ -45,22 +51,22 @@ function App() {
   useEffect(() => {
     async function handleMessage(connection: MessageEvent<any>) {
       const { message, details } = await getSocketData(connection.data);
-      console.log(secondaryChatter);
-      console.log(primaryChatter);
+      //console.log(secondaryChatter);
+      //console.log(primaryChatter);
       switch (details.type) {
         case "newUser": {
-          console.log("new user");
+          //console.log("new user");
           dispatch(setWsStatus());
           break;
         }
         case "message":
           {
-            console.log(message);
-            console.log("dispatching");
-            console.log(details.sender + " " + secondaryChatter);
+            //console.log(message);
+            //console.log("dispatching");
+            //console.log(details.sender + " " + secondaryChatter);
             if (details.sender === secondaryChatter) {
-              console.log(message);
-              console.log("dispatching");
+              //console.log(message);
+              //console.log("dispatching");
               dispatch(pushMessage([{ message: message, isReceiver: true }]));
             } else {
               play();
@@ -78,7 +84,7 @@ function App() {
         case "getMess":
           {
             const chat: ChatsDataInterface = JSON.parse(message);
-            console.log(chat);
+            console.log(chat.seen);
             const finalChats = chat.messages.map((item) => {
               const isReceiver = item.sender !== currentUser.userID;
               return {
@@ -89,9 +95,14 @@ function App() {
               };
             });
             const reversedChats = finalChats.reverse();
-            console.log(reversedChats);
+            //console.log(reversedChats);
             if (chat.page === 1) dispatch(updateChats(reversedChats));
             else dispatch(pushChat(reversedChats));
+          }
+          break;
+        case "msgSeen":
+          {
+            //console.log("msg seen");
           }
           break;
         default: {
@@ -118,7 +129,7 @@ function App() {
           element: <Chat />,
           // loader: async ({ request, params }) => {
           //   if (wsClient.readyState === 1 && params.chatterID !== ""){
-          //     console.log("hello")
+          //     //console.log("hello")
           //     sendSocketMessage({
           //       sender: currentUser.userID,
           //       receiver: params.chatterID || "",

@@ -12,6 +12,7 @@ interface args {
     | "callTmo"
     | "callAcc"
     | "getMess"
+    | "msgSeen"
     | "conClos";
   wsClient: WebSocket;
   data: Blob;
@@ -25,7 +26,7 @@ function sendSocketMessage({ sender, receiver, type, wsClient, data }: args) {
       receiver,
     }),
   ]);
-  console.log(type);
+  //console.log(type);
   const combinedBlob = new Blob([detailsBlob, data]);
   wsClient.send(combinedBlob);
 }

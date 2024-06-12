@@ -15,7 +15,7 @@ export default function Routing({map, waypoints }) {
 
   const routingControl = L.Routing.control({
     waypoints: waypoints.map(({ latitude, longitude }, index) => {
-      console.log([latitude, longitude]);
+      //console.log([latitude, longitude]);
       return L.latLng(latitude, longitude);
     }),
     routeWhileDragging: true,
