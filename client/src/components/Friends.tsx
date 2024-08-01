@@ -1,17 +1,18 @@
-import Search from "./Search";
-import FriendList from "./FriendList";
-import Setting from "./Setting";
+import { lazy } from "react";
+const Search = lazy(() => import("./Search"));
+const FriendList = lazy(() => import("./FriendList"));
+import { Suspense } from "react";
 
 export default function Friends() {
   return (
-    <div className="relative bg-gray-900 min-h-screen border-r-2 border-gray-700 px-2 py-2 flex flex-col gap-5">
-      <div className="h-[calc(100vh-48px)] overflow-y-auto">
-        <h1 className="text-2xl">Chats</h1>
+    <div className="relative min-h-screen max-h-screen border-r border-gray-200 flex gap-1">
+      <div className="overflow-y-auto mt-10 flex-1 px-2 md:px-5">
+        <h1 className="text-2xl mb-5">Messages</h1>
         <Search />
-        <FriendList />
+        <Suspense fallback={null}>
+          <FriendList />
+        </Suspense>
       </div>
-      <Setting />
     </div>
   );
 }
-

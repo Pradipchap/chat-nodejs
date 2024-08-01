@@ -1,15 +1,15 @@
 import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import Vite from "../../src/assets/avatar.svg";
+import { UserRelation } from "../../interfaces/dataInterfaces";
 interface CurrentChatInterface {
   primaryChatter: string;
   secondaryChatter: string;
+  secondaryChatterName: string;
+  secondaryChatterImage: string;
+  secondaryChatterRelation: UserRelation;
+  isSeen: boolean;
   chats: { message: string; isReceiver: boolean; time: Date; id: string }[];
 }
-export const updatePrimaryChatter = createAsyncThunk(
-  "primaryChatter",
-  async (primaryChatter: string) => {
-    return primaryChatter;
-  }
-);
 export const updateSecondaryChatter = createAsyncThunk(
   "secondaryChatter",
   async (secondaryChatter: string) => {
@@ -20,15 +20,17 @@ export const updateSecondaryChatter = createAsyncThunk(
 const CHAT_SLICE = createSlice({
   name: "chat",
   initialState: <CurrentChatInterface>{
-    primaryChatter: "",
     secondaryChatter: "",
+    secondaryChatterName: "",
+    secondaryChatterImage: Vite,
+    secondaryChatterRelation: null,
+    isSeen: false,
     chats: <
       { message: string; isReceiver: boolean; time: Date; id: string }[]
     >[],
   },
   reducers: {
     updateCurrentChatter: (state, action) => {
-      state.primaryChatter = action.payload.primaryChatter;
       state.secondaryChatter = action.payload.secondaryChatter;
     },
     updateChats: (state, action) => {
@@ -40,13 +42,22 @@ const CHAT_SLICE = createSlice({
     pushMessage: (state, action) => {
       state.chats.push(...action.payload);
     },
+    updateChatterDetails: (state, action) => {
+      state.secondaryChatterName = action.payload.name;
+      state.secondaryChatterRelation = action.payload.relation;
+      if (typeof action.payload.image !== "undefined") {
+        state.secondaryChatterImage = action.payload.image;
+      }
+      state.secondaryChatter = action.payload.secondaryChatter;
+    },
+    updateSeenStatus: (state, action) => {
+      state.isSeen = action.payload;
+    },
+    updateRelation: (state, action) => {
+      state.secondaryChatterRelation = action.payload;
+    },
   },
   extraReducers(builder) {
-    builder.addCase(updatePrimaryChatter.fulfilled, (state, action) => {
-      if (action.payload) {
-        state.primaryChatter = action.payload;
-      }
-    });
     builder.addCase(updateSecondaryChatter.fulfilled, (state, action) => {
       if (action.payload) {
         state.secondaryChatter = action.payload;
@@ -55,6 +66,13 @@ const CHAT_SLICE = createSlice({
   },
 });
 
-export const { updateCurrentChatter, updateChats, pushChat, pushMessage } =
-  CHAT_SLICE.actions;
+export const {
+  updateCurrentChatter,
+  updateChats,
+  pushChat,
+  pushMessage,
+  updateChatterDetails,
+  updateSeenStatus,
+  updateRelation,
+} = CHAT_SLICE.actions;
 export default CHAT_SLICE.reducer;

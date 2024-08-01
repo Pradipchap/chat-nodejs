@@ -6,18 +6,13 @@ const UserSchema = new Schema({
     required: [true, "email is required"],
     unique: [true, "email already exists!!"],
   },
+  image: {
+    type: String,
+  },
   username: {
     type: String,
     required: [true, "username is required"],
   },
-  websocketId:{
-    type:String,
-    required:[true,"websocket id is required"]
-  },
-  // image: {
-  //   type: String,
-  //   requied:[true, "image is required"],
-  // },
   phone: {
     type: String,
   },

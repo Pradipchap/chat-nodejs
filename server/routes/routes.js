@@ -16,28 +16,36 @@ const FriendRequests = require("../models/FriendRequests");
 const getCombinedId = require("../utils/getCombinedId");
 const { ObjectId } = require("mongodb");
 const Convo = require("../models/ConvoModel");
+const app = require("../index.js");
+const multer = require("multer");
+const storage = multer.memoryStorage();
+const upload = multer({ storage: storage });
+const { put, del } = require("@vercel/blob");
 
 router.use(cookieParser());
+const optimizeProfileImage = require("./optimizeProfile.js");
+const { default: mongoose } = require("mongoose");
+const { default: sendError } = require("../utils/sendError.js");
 
 router.post("/users", authenticate, async (req, res) => {
   try {
     const userID = req.body.userID;
     const pageNo = (req.query.pageNo || 1) - 1;
     const limitingNumber = 10;
-    console.log("user id is",userID)
+    console.log("user id is", userID);
     await connectToDB();
     const noOfUsers = await User.estimatedDocumentCount();
     console.log("no of users", noOfUsers);
     const users = await User.find({ _id: { $ne: new ObjectId(userID) } })
       .limit(limitingNumber)
       .skip(pageNo * limitingNumber);
-      console.log("asd",users)
+    console.log("asd", users);
     res.status(200).json({
       users,
       noOfUsers: noOfUsers - 1,
     });
   } catch (error) {
-    console.log("error is",error)
+    console.log("error is", error);
     res.status(200).json({
       error: {
         errorMessage: error,
@@ -48,8 +56,8 @@ router.post("/users", authenticate, async (req, res) => {
 router.post("/chatters", authenticate, async (req, res) => {
   try {
     const userID = req.body.userID;
-    const pageNo = (req.query.pageNo || 1) - 1;
-    const limitingNumber = 10;
+    const page = (req.query.page || 1) - 1;
+    const limitingNumber = 12;
     await connectToDB();
     ////console.log(userID);
     // await Convo.findByIdAndUpdate("66269d8923e9f5554a7f00fc",
@@ -73,7 +81,7 @@ router.post("/chatters", authenticate, async (req, res) => {
       { $unwind: "$conversation" },
       // Sort the conversations by updatedAt timestamp in descending order
       { $sort: { "conversation.updatedAt": -1 } },
-      { $skip: pageNo * limitingNumber }, // Skip the first N results (for pagination)
+      { $skip: page * limitingNumber }, // Skip the first N results (for pagination)
       { $limit: limitingNumber },
       // Group the conversations by combinedID to remove duplicates
       {
@@ -98,6 +106,7 @@ router.post("/chatters", authenticate, async (req, res) => {
       },
       {
         $project: {
+          relation: { $literal: "FRIEND" },
           _id: 1,
           chatterID: { $arrayElemAt: ["$filteredParticipants", 0] }, // Extract the first (and only) element from the array
         },
@@ -106,6 +115,57 @@ router.post("/chatters", authenticate, async (req, res) => {
 
     return res.json({ users: result });
   } catch (error) {
+    console.log(error);
+    res.status(200).json({
+      error: {
+        errorMessage: error,
+      },
+    });
+  }
+});
+
+router.post("/chats", authenticate, async (req, res) => {
+  try {
+    const userID = req.body.userID;
+    console.log(userID);
+    const requestID = req.body.requestID;
+    console.log(requestID);
+    const documentID = getCombinedId(userID, requestID);
+    //console.log("docuemtn id", documentID);
+    const pageNo = req.body.page || 1;
+    await connectToDB();
+    //console.log("page is", pageNo);
+    await Convo.aggregate([
+      { $match: { combinedID: documentID } }, // Match the document by its ID
+      {
+        $project: {
+          first10Messages: {
+            $slice: ["$messages", 20 * (Number(pageNo) - 1), 20],
+          },
+          seen: 1,
+        },
+      },
+    ])
+      .then(async (result) => {
+        if (result.length > 0) {
+          // //console.log(result[0].first10Messages)
+          return res.json({
+            page: pageNo,
+            messages: result[0].first10Messages,
+            seen: result[0].seen,
+          });
+        } else {
+          //console.log("Document not found");
+          throw "";
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        throw err;
+      });
+    // //console.log("messages are",messages)
+  } catch (error) {
+    console.log(error);
     res.status(200).json({
       error: {
         errorMessage: error,
@@ -119,25 +179,31 @@ router.post("/getChatter", authenticate, async (req, res) => {
     const userID = req.body.userID;
     const requestID = req.body.requestID;
     await connectToDB();
-    ////console.log(userID);
-
     const combinedID = getCombinedId(userID, requestID);
-
+    console.log("requestid", requestID);
+    const isActive = requestID in app.users;
     const results = await Convo.aggregate([
       { $match: { combinedID } },
       {
         $project: {
-          _id: 1,
+          seen: 1,
           combinedID: 1,
-          seen:1,
           latestMessage: { $arrayElemAt: ["$messages", 0] },
-          chatterID: {
+          chatter: {
             $filter: {
               input: "$participants",
               as: "participant",
               cond: { $eq: ["$$participant", new ObjectId(requestID)] },
             },
           },
+        },
+      },
+      {
+        $project: {
+          seen: 1,
+          combinedID: 1,
+          latestMessage: 1,
+          chatterID: { $arrayElemAt: ["$chatter", 0] },
         },
       },
       {
@@ -150,82 +216,38 @@ router.post("/getChatter", authenticate, async (req, res) => {
       },
       {
         $project: {
+          chatterID: 1,
           _id: 1,
           combinedID: 1,
-          seen:1,
+          seen: 1,
           latestMessage: 1,
+          isActive: { $literal: isActive },
           participantDetails: { $arrayElemAt: ["$participantDetails", 0] }, // Extract the first (and only) element from the array
         },
       },
     ]);
-    ////console.log("result are",results)
-    return res.json( results[0] );
+    console.log("asdfas", results[0]);
+    return res.json(results[0]);
   } catch (error) {
+    console.log("error is", error);
     res.status(200).json({
       error: {
-        errorMessage: error,
+        errorMessage: JSON.stringify({ ...error }),
       },
     });
   }
 });
 
 router.post("/user", authenticate, async (req, res) => {
-  const requestUserID = req.query.userID;
+  const requestUserID = req.body.requestID;
   const userID = req.body.userID;
+  console.log("request id", requestUserID);
   try {
     await connectToDB();
-
-    const isFriend = await Friends.findOne(
-      { userID, "friends.userID": requestUserID },
-      {
-        "friends.$": 1,
-      }
-    ).populate({ path: "friends.userID" });
-    if (isFriend) {
-      return res.status(200).json({
-        isFriend: true,
-        hasIGotRequest: false,
-        hasISentRequest: false,
-        userDetails: isFriend.friends[0].userID,
-      });
-      return;
-    }
-    const hasIGotRequest = await FriendRequests.findOne(
-      { userID, friendRequests: requestUserID },
-      {
-        "friendRequests.$": 1,
-      }
-    ).populate({ path: "friendRequests" });
-    if (hasIGotRequest) {
-      return res.status(200).json({
-        isFriend: false,
-        hasIGotRequest: true,
-        hasISentRequest: false,
-        userDetails: hasIGotRequest.friendRequests[0],
-      });
-      return;
-    }
-    const hasISentRequest = await FriendRequests.findOne(
-      { userID: requestUserID, friendRequests: userID },
-      {
-        "friendRequests.$": 1,
-      }
-    ).populate("userID");
-    if (hasISentRequest) {
-      return res.status(200).json({
-        isFriend: false,
-        hasIGotRequest: false,
-        hasISentRequest: true,
-        userDetails: hasISentRequest.userID,
-      });
-      return;
-    }
     const userDetails = await User.findById(requestUserID);
+    console.log("userDetails", userDetails);
     return res.status(200).json({
-      isFriend: false,
-      userDetails,
-      hasIGotRequest: false,
-      hasISentRequest: false,
+      participantDetails: userDetails,
     });
     return;
   } catch (error) {
@@ -236,18 +258,53 @@ router.post("/user", authenticate, async (req, res) => {
     });
   }
 });
+router.post("/notChatter", authenticate, async (req, res) => {
+  const requestUserID = req.body.requestID;
+  const userID = req.body.userID;
+  try {
+    await connectToDB();
+    const details = await User.findById(requestUserID);
+    console.log("hasIGotRequest", details);
+    return res.status(200).json({
+      participantDetails: details,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      error: {
+        errorMessage: error,
+      },
+    });
+  }
+});
+router.post("/getRequested", authenticate, async (req, res) => {
+  const requestUserID = req.body.userID;
+  const userID = req.body.userID;
+  try {
+    await connectToDB();
+    const hasIGotRequest = await FriendRequests.findOne(
+      { userID: requestUserID, friendRequests: userID },
+      {
+        "friendRequests.$": 1,
+      }
+    ).populate({ path: "friendRequests" });
+    console.log("getRequested", hasIGotRequest);
+    return res.status(200).json({
+      userDetails: hasIGotRequest.friendRequests[0],
+    });
+  } catch (error) {}
+});
 
 router.post("/sendFriendRequest", authenticate, async (req, res) => {
-  ////console.log("first");
   const userID = req.body.userID;
-  const friendUserID = req.body.friendID;
-  ////console.log("req body is", req.body);
+  const friendUserID = req.body.requestID;
+  console.log("req body is", req.body);
   try {
     await connectToDB();
     const response = await FriendRequests.updateOne(
       { userID: friendUserID },
       { $addToSet: { friendRequests: userID } }
     );
+    console.log("response is", response);
     return res.json({ message: "Friend Requests Sent" });
   } catch (error) {
     res.status(500).json({
@@ -260,18 +317,20 @@ router.post("/sendFriendRequest", authenticate, async (req, res) => {
 
 router.post("/confirmRequest", authenticate, async (req, res) => {
   const userID = req.body.userID;
+  console.log("req.body", req.body);
   const requestID = req.body.requestID;
-  ////console.log("asd", userID, requestID);
+  console.log("asd", userID, requestID);
   const combinedID = getCombinedId(userID, requestID);
-  ////console.log("cas", combinedID);
+  console.log("cas", combinedID);
   try {
+    await connectToDB();
     const ConvoDetails = await Convo.create({
       combinedID: combinedID,
       messages: [],
-      seen:false,
+      seen: false,
       participants: [new ObjectId(userID), new ObjectId(requestID)],
     });
-    ////console.log("convo is", ConvoDetails);
+    console.log("convo is", ConvoDetails);
     await Friends.updateOne(
       { userID, "friends.userID": { $ne: requestID } },
       {
@@ -288,8 +347,9 @@ router.post("/confirmRequest", authenticate, async (req, res) => {
       { userID },
       { $pull: { friendRequests: requestID } }
     );
-    return res.json({});
+    return res.json({ convoID: ConvoDetails._id });
   } catch (error) {
+    console.log("error is", error);
     if (error.code === 11000 && error.keyPattern.users) {
       console.error("Duplicate key error: users field has duplicate values.");
       return res.status(400).json({ error: "Duplicate values in users field" });
@@ -374,7 +434,7 @@ router.post("/getFriendRequests", authenticate, async (req, res) => {
         },
       },
     ]);
-    console.log(result)
+    console.log("fsd", result);
     return res.json({
       users: result[0].friendRequests,
       noOfUser: result[0].totalFriendRequests,
@@ -470,11 +530,12 @@ router.post("/users/search", authenticate, async (req, res) => {
     ////console.log("userasdf", userID);
     const searchString = req.body.searchString;
     ////console.log("params", searchString);
+    console.log(userID, searchString);
     await connectToDB();
     const pipeline = [
       {
         $search: {
-          index: "usersSearch",
+          index: "default",
           autocomplete: {
             query: searchString,
             path: "username",
@@ -486,14 +547,136 @@ router.post("/users/search", authenticate, async (req, res) => {
           _id: { $ne: new ObjectId(userID) },
         },
       },
+      {
+        $addFields: {
+          searchedId: "$_id"
+        },
+      },
+      {
+        $lookup: {
+          from: "friends",
+          let: { userId: "$_id" },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$userID", new ObjectId(userID)] } } },
+            { $unwind: "$friends" },
+            { $match: { $expr: { $eq: ["$friends.userID", "$$userId"] } } },
+          ],
+          as: "friendsData",
+        },
+      },
+      {
+        $addFields: {
+          isFriend: { $gt: [{ $size: "$friendsData" }, 0] },
+        },
+      },
+      {
+        $lookup: {
+          from: "friendrequests",
+          let: { userId: "$_id", isFriend: "$isFriend" },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$userID", new ObjectId(userID)] },
+                    { $not: { $ifNull: ["$$isFriend", false] } },
+                  ],
+                },
+              },
+            },
+            { $unwind: "$friendRequests" },
+            { $match: { $expr: { $eq: ["$friendRequests", "$$userId"] } } },
+          ],
+          as: "friendRequestsData",
+        },
+      },
+      {
+        $addFields: {
+          gotRequest: {
+            $cond: {
+              if: "$isFriend",
+              then: false,
+              else: { $gt: [{ $size: "$friendRequestsData" }, 0] },
+            },
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: "friendrequests",
+          let: {
+            userId: new ObjectId(userID),
+            isFriend: "$isFriend",
+            searchedId:"$searchedId",
+            gotRequest: "$gotRequest",
+          },
+          pipeline: [
+            {
+              $match: {
+                $expr: {
+                  $and: [
+                    { $eq: ["$userID", "$$searchedId"] },
+                    {
+                      $not: {
+                        $ifNull: ["$$isFriend", false, "$$gotRequest", false],
+                      },
+                    },
+                  ],
+                },
+              },
+            },
+            { $unwind: "$friendRequests" },
+            { $match: { $expr: { $eq: ["$friendRequests", "$$userId"] } } },
+          ],
+          as: "friendRequestsData",
+        },
+      },
+      {
+        $addFields: {
+          sentRequest: {
+            $cond: {
+              if: "$isFriend",
+              then: false,
+              else: { $gt: [{ $size: "$friendRequestsData" }, 0] },
+            },
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          chatterID: "$_id",
+          relation: {
+            $cond: {
+              if: "$isFriend",
+              then: "FRIEND",
+              else: {
+                $cond: {
+                  if: "$gotRequest",
+                  then: "GOTREQUEST",
+                  else: {
+                    $cond: {
+                      if: "$sentRequest",
+                      then: "SENTREQUEST",
+                      else: "NORMAL",
+                    },
+                  },
+                },
+              },
+            },
+          },
+        },
+      },
     ];
+
     const users = await User.aggregate(pipeline).limit(10);
-    ////console.log("users are", users);
+    console.log("users are", users);
     res.status(200).json({
       users,
       noOfUser: users.length,
     });
   } catch (error) {
+    console.log(error)
     res.status(200).json({
       error: {
         errorMessage: error,
@@ -504,48 +687,51 @@ router.post("/users/search", authenticate, async (req, res) => {
 
 router.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
-  ////console.log("body", username, email, password);
+  const client = await connectToDB();
+
+  if (!client) {
+    return sendError(ErrorCodes.NORMAL, "Failed to connect to the database",res,500);
+  }
+  const session = await client.startSession();
+  await session.startTransaction();
+  
   try {
-    const websocketId = randomUUID();
-    await connectToDB();
     const doesUserExists = await User.exists({ email });
     ////console.log("does user exists", doesUserExists);
     if (doesUserExists !== null) {
       res.status(403);
-      res.json({
-        error: {
-          errorMessage: "User already exists",
-          errorCOde: ErrorCodes.USER_EXISTS,
-        },
-      });
-      return;
+      return sendError(403,"User already exists",res)
     }
     const hashedPassword = await bcrypt.hash(password, 10);
     const x = Math.ceil((Math.random() + 0.1) * 1000000).toString();
     const verificationCode = x.slice(0, 6);
     const hashedCode = await bcrypt.hash(verificationCode.toString(), 10);
+    
+    const newUser = await User.create([{
+      username,
+      email,
+      image: "",
+    }],{session});
+    console.log("user id", newUser[0]._id);
+    const newUserCredentials = await UserCredentials.create([{
+      email,
+      password: hashedPassword,
+      user: newUser[0]._id,
+      code: hashedCode,
+    }],{session});
+    await Friends.create([{ userID: newUser[0]._id, friends: [] }],{session});
+    await FriendRequests.create([{ userID: newUser[0]._id, friendRequests: [] }],{session});
     await sendMail({
       to: email,
       subject: "verification",
       text: verificationCode.toString(),
     });
-    const newUser = await User.create({
-      username,
-      email,
-      websocketId,
-    });
-    ////console.log("user id", newUser._id);
-    const newUserCredentials = await UserCredentials.create({
-      email,
-      password: hashedPassword,
-      user: newUser._id,
-      code: hashedCode,
-    });
-    await Friends.create({ userID: newUser._id, friends: [] });
-    await FriendRequests.create({ userID: newUser._id, friendRequests: [] });
-    res.send(JSON.stringify(newUser));
+    await session.commitTransaction();
+    res.send(JSON.stringify(newUser[0]));
     return;
+    
   } catch (error) {
+    await session.abortTransaction();
     res.status(error.status || 500);
     res.json({
       error: {
@@ -553,6 +739,9 @@ router.post("/register", async (req, res) => {
       },
     });
     return;
+  }
+  finally{
+    await session.endSession();
   }
 });
 
@@ -563,9 +752,11 @@ router.post("/login", async (req, res) => {
     const userDetail = await UserCredentials.findOne({ email }).populate(
       "user"
     );
+    console.log("asd",userDetail.user)
     if (!userDetail) {
       throw new Error("User doesn't exists");
     }
+    console.log(userDetail.user._id)
     const userVerifiedDate = await userDetail.verifiedAt;
     if (!userVerifiedDate) {
       res.status(401).json({
@@ -592,10 +783,11 @@ router.post("/login", async (req, res) => {
       res.cookie("accessToken", token, { maxAge: 86400 });
       res.json({
         accessToken: token,
+        image: userDetail.user.image,
         email: userDetail.user.email,
         username: userDetail.user.username,
         userID: userDetail.user._id,
-        websockedId: userDetail.user.websockedId,
+        phone:userDetail.user.phone
       });
       return;
     } else {
@@ -621,6 +813,7 @@ router.get("/test", authenticate, async (req, res) => {
     }).populate("userid");
     res.send(UserDetails);
   } catch (error) {
+    console.log(error);
     res.send("unsuccess");
   }
 });
@@ -766,9 +959,70 @@ router.post("/changePassword", async (req, res) => {
     });
   }
 });
+router.post(
+  "/editProfile",
+  authenticate,
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      const { userID, name, dateofbirth, phone } = req.body;
+      await connectToDB();
+      const profileImage = req.file;
+      let imageUrl = "";
+      if (
+        typeof profileImage !== "undefined" &&
+        profileImage.hasOwnProperty("size")
+      ) {
+        const fileName = profileImage.originalname.split(".")[0];
+        const optimizedImage = await optimizeProfileImage(profileImage);
+        console.log("first", process.env.MONGODB_URI);
+        const imageDetails = await put(`${fileName}.webp`, optimizedImage, {
+          access: "public",
+          token: process.env.BLOB_READ_WRITE_TOKEN,
+        });
+        imageUrl = imageDetails.url;
+      }
+      if (imageUrl !== "") {
+        const detailsBeforeUpdate = await User.findById(userID);
+        console.log(detailsBeforeUpdate)
+        if (detailsBeforeUpdate.image !== ""){
+          console.log(detailsBeforeUpdate.image)
+          await del(detailsBeforeUpdate.image, {
+            token: process.env.BLOB_READ_WRITE_TOKEN,
+          }).catch((err) => {
+            throw "previous image not deleted";
+          });
+        }
+          
+      }
 
-router.get("/",async(req,res)=>{
-  res.json({message:"Hello world"})
+      const updatedProfile = await User.findByIdAndUpdate(
+        userID,
+        {
+          ...(name !== "" ? { username: name } : {}),
+          ...(dateofbirth !== "" ? { dateofbirth: dateofbirth } : {}),
+          ...(phone !== "" ? { phone: phone } : {}),
+          ...(imageUrl !== "" ? { image: imageUrl } : {}),
+        },
+        { new: true }
+      );
+
+      return res
+        .status(200)
+        .json({ message: "profile updated successfully", updatedProfile });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({
+        error: {
+          errorMessage: "Something wrong happened",
+        },
+      });
+    }
+  }
+);
+
+router.get("/", async (req, res) => {
+  res.json({ message: "Hello world" });
   ////console.log(first)
 });
 module.exports = router;

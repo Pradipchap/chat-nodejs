@@ -19,16 +19,15 @@ import {
   faLock,
   faLockOpen,
   faPenToSquare,
-  faPen,
   faExclamation,
   faRightFromBracket,
   faBookOpen,
-  faPencilSquare,
   faPhone,
   faLeftLong,
   faGear,
-  faMessage,
   faUserPlus,
+  faEdit,
+  faUserEdit,
 } from "@fortawesome/free-solid-svg-icons";
 import { faSpinner, faQuestion } from "@fortawesome/free-solid-svg-icons";
 import {
@@ -41,6 +40,7 @@ import {
   faTrashCan,
   faUser,
 } from "@fortawesome/free-regular-svg-icons";
+import { faMessage } from "@fortawesome/free-solid-svg-icons/faMessage";
 interface IconProps {
   name: string;
   className?: string;
@@ -48,6 +48,13 @@ interface IconProps {
 
 export default function Icon({ name, className = "" }: IconProps) {
   switch (name) {
+    case "Call":
+      return (
+        <FontAwesomeIcon
+          icon={faPhone}
+          className={classNames("text-black text-lg", className)}
+        />
+      );
     case "Dashboard":
       return (
         <FontAwesomeIcon
@@ -76,7 +83,7 @@ export default function Icon({ name, className = "" }: IconProps) {
           className={classNames("text-black text-lg", className)}
         />
       );
-      case "Message":
+    case "Message":
       return (
         <FontAwesomeIcon
           icon={faMessage}
@@ -167,7 +174,7 @@ export default function Icon({ name, className = "" }: IconProps) {
           className={classNames("text-black text-lg", className)}
         />
       );
-      case "FriendRequest":
+    case "FriendRequest":
       return (
         <FontAwesomeIcon
           icon={faUserPlus}
@@ -184,7 +191,14 @@ export default function Icon({ name, className = "" }: IconProps) {
     case "Edit":
       return (
         <FontAwesomeIcon
-          icon={faPencilSquare}
+          icon={faEdit}
+          className={classNames("text-black text-lg", className)}
+        />
+      );
+    case "UserEdit":
+      return (
+        <FontAwesomeIcon
+          icon={faUserEdit}
           className={classNames("text-black text-lg", className)}
         />
       );
@@ -283,7 +297,7 @@ export default function Icon({ name, className = "" }: IconProps) {
       return (
         <FontAwesomeIcon
           icon={faSpinner}
-          className={classNames("text-lg text-black", className)}
+          className={classNames("text-lg text-black animate-spin", className)}
         />
       );
     case "Save":
@@ -322,11 +336,6 @@ export default function Icon({ name, className = "" }: IconProps) {
         />
       );
     default:
-      return (
-        <FontAwesomeIcon
-          icon={faPen}
-          className={classNames("text-lg text-black", className)}
-        />
-      );
+      return null;
   }
 }

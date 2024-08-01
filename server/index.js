@@ -12,17 +12,34 @@ const User = require("./models/UserModel");
 const saveMessage = require("./utils/worker");
 const Convo = require("./models/ConvoModel");
 const getCombinedId = require("./utils/getCombinedId");
+const compression =require("compression")
+const bodyParser = require('body-parser');
+// Set JSON body limit
+app.use(bodyParser.json({ limit: '50mb' })); // Adjust the limit as needed
+
+// Set URL-encoded body limit
+app.use(bodyParser.urlencoded({ limit: '50mb', extended: true })); // Adjust the limit as needed
 
 app.use(cors());
+app.use(
+  compression({
+    level: 6, //
+    threshold: 0,
+    filter: (req, res) => {
+      if (!req.headers['x-no-compression']) {
+        return compression.filter(req, res);
+      }
+      return false; // Don't apply compression if 'x-no-compression' header is present
+    },
+  })
+);
 app.use("/api", routes);
 app.use(express.json());
-const server = http.createServer(app);
+
+
+const server=app.listen(port, () => console.log("Server ready on port 3100."));
 
 const wsServer = new WebSocketServer({ server });
-
-server.listen(port, async (req, res) => {
-  //console.log(`server started at http://}`);
-});
 
 const clients = {};
 // I'm maintaining all active users in this object
@@ -208,7 +225,7 @@ async function handleMessage(message, connectionId, connection) {
               ]);
               //console.log("messages", messages);
               //console.log("sender", sender);
-              const requestData = new Blob([messages]);
+              const requestData = new Blob([messages],{type:"application/json"});
               const combinedData = await new Blob([
                 detail,
                 requestData,
@@ -301,3 +318,6 @@ wsServer.on("connection", function (connection, req) {
     handleDisconnect(connectionId);
   });
 });
+
+exports.users=users;
+module.exports=app;

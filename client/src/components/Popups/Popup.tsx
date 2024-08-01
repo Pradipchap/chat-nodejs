@@ -1,5 +1,3 @@
-"use client";
-
 import {
   Fragment,
   ReactElement,
@@ -19,18 +17,17 @@ interface dropdownProps {
 export default function PopupOver({
   children,
   content,
-  targetIndependent,
+  targetIndependent = false,
 }: dropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [position, setposition] = useState<{
-    top?: number | undefined;
-    right?: number | undefined;
-    left?: number | undefined;
-    bottom?: number | undefined;
-  }>({});
+    top: number;
+    left: number;
+  } | null>(null);
 
   const buttonRef = useRef<HTMLButtonElement | null>(null);
   const popupRef = useRef<HTMLDivElement | null>(null);
+
   function setWidth() {
     if (targetIndependent) return {};
     else {
@@ -38,6 +35,7 @@ export default function PopupOver({
       return { width };
     }
   }
+
   function getPostition() {
     const x = buttonRef.current?.getBoundingClientRect().right;
     const y = buttonRef.current?.getBoundingClientRect().y;
@@ -48,7 +46,7 @@ export default function PopupOver({
     const popupHeight = popupRef.current?.getBoundingClientRect().height;
 
     if (!buttonRef.current || !popupRef.current) {
-      return;
+      return null;
     }
     if (typeof y !== "undefined" && typeof x !== "undefined") {
       const top = Math.ceil(y) + (buttonRef.current?.clientHeight || 0);
@@ -65,7 +63,7 @@ export default function PopupOver({
         };
       } else return { top: top, left: right };
     } else {
-      return {};
+      return null;
     }
   }
 
@@ -97,6 +95,7 @@ export default function PopupOver({
   useEffect(() => {
     function handleScreenSize() {
       const position = getPostition();
+      //eslint-disable-next-line
       setposition(position);
     }
 
@@ -106,12 +105,15 @@ export default function PopupOver({
 
   useEffect(
     () => {
+      if (!popupRef.current) {
+        return;
+      }
       const position = getPostition();
       setposition(position);
     },
 
     //eslint--next-line react-hooks/exhaustive-deps
-    [popupRef.current, isOpen]
+    [isOpen]
   );
 
   return (
@@ -122,8 +124,8 @@ export default function PopupOver({
           {...(children as ReactElement).props}
           onClick={() => {
             setIsOpen((isOpen) => !isOpen);
-            const pos = getPostition();
-            setposition(pos);
+            // const pos = getPostition();
+            // setposition(pos);
           }}
           className={(children as ReactElement).props.className}
         >

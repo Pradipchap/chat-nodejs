@@ -1,18 +1,46 @@
-import { useState } from "react";
-import StatusButton from "./StatusButton";
+import { lazy, useState } from "react";
+const StatusButton = lazy(() => import("./StatusButton"));
 import { SUBMIT_STATUS } from "../../utils/constants";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
+import friendController from "../../functions/friendController";
+import { useAppDispatch, useAppSelector } from "../../utils/reduxHooks";
+import { pullChatters, pushChatters } from "../../redux/slices/UsersSlice";
+import {
+  updateChatterDetails,
+} from "../../redux/slices/ChatSlice";
 
 interface props {
-  userID?: string;
+  userID: string;
   username: string;
   email: string;
   image?: string;
 }
-export default function UserCard({ username, email, userID }: props) {
-  const [requestStatus, setRequestStatus] = useState<SUBMIT_STATUS>(
+export default function UserCard({ username, userID, email, image }: props) {
+  //eslint-disable-next-line
+  const accessToken = useAppSelector((state) => state.currentUser.accessToken);
+  const [requestStatus] = useState<SUBMIT_STATUS>(SUBMIT_STATUS.IDLE);
+  const [requestStatusDelete, setRequestStatusDelete] = useState<SUBMIT_STATUS>(
     SUBMIT_STATUS.IDLE
   );
+  const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+
+  async function deleteFriend() {
+    try {
+      setRequestStatusDelete(SUBMIT_STATUS.LOADING);
+      await friendController({
+        requestData: { friendID: userID },
+        apiString: "/deleteFriend",
+        setrequestStatus: setRequestStatusDelete,
+        accessToken: accessToken,
+      });
+      dispatch(pullChatters(userID));
+      setRequestStatusDelete(SUBMIT_STATUS.SUCCESS);
+    } catch (error) {
+      console.log(error);
+      setRequestStatusDelete(SUBMIT_STATUS.FAILED);
+    }
+  }
   return (
     <div className="w-full max-w-[250px] h-max p-3 bg-white border border-gray-200 rounded-lg shadow">
       <div className="flex flex-col items-center justify-between">
@@ -21,32 +49,46 @@ export default function UserCard({ username, email, userID }: props) {
           src="/docs/images/people/profile-picture-3.jpg"
           alt="Bonnie image"
         />
-        <Link
-          to={`/friends/userProfile/${userID}`}
-          className="mb-1 text-xl font-medium text-gray-900"
-        >
-          {username}
-        </Link>
-        <span className="text-sm text-gray-500">{userID}</span>
+        <p className="mb-1 text-xl font-medium text-gray-900">{username}</p>
+        <span className="text-sm text-gray-500">{email}</span>
         <div className="flex mt-4 md:mt-6"></div>
         <div className="flex flex-col gap-2 w-full">
           <StatusButton
             idleIcon="Message"
             idleMessage="Message"
             requestStatus={requestStatus}
-            onClick={() => {}}
+            onClick={() => {
+              dispatch(
+                pushChatters({
+                  username: username,
+                  email: email,
+                  _id: crypto.randomUUID(),
+                  chatterID: userID,
+                  relation: "FRIEND",
+                })
+              );
+              dispatch(
+                updateChatterDetails({
+                  name: username,
+                  image: image,
+                  relation: "FRIEND",
+                  secondaryChatter: userID,
+                })
+              );
+              navigate(`/chat/${userID}`);
+            }}
           />
-          {/* 
+
           <StatusButton
             idleIcon="Delete"
-            className="bg-black"
             requestStatus={requestStatusDelete}
-            onClick={deleteRequest}
-            idleMessage="Delete Request"
+            onClick={deleteFriend}
+            idleClassName="bg-red-700"
+            idleMessage="Delete Friend"
             loadingMessage="Deleting"
             successMessage="Deleted"
             failedMessage="Couldn't Delete"
-          /> */}
+          />
         </div>
       </div>
     </div>

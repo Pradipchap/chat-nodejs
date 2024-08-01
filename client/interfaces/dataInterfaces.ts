@@ -12,20 +12,29 @@ export interface FriendBoxInterface {
   seen: boolean;
 }
 
+export interface MessageInterface {
+  message: string;
+  isReceiver: boolean;
+  time: Date;
+  id: string;
+  image?: string;
+}
 export interface ChatsDataInterface {
   page: number;
   seen: boolean;
-  messages: {
-    message: string;
-    sender: string;
-    _id: string;
-    datetime: Date;
-  }[];
+  messages: { message: string; sender: string; _id: string; datetime: Date }[];
 }
+export type UserRelation =
+  | "FRIEND"
+  | "GOTREQUEST"
+  | "SENTREQUEST"
+  | "NORMAL"
+  | null;
 
 export interface ChatterInterface {
   _id: string;
   chatterID: string;
+  relation: UserRelation;
   message?: string;
   whoMessaged?: string;
   datetime?: string;
@@ -40,12 +49,13 @@ export interface ChatterDetailsInterface {
     _id: string;
     datetime: string;
   };
+  isActive: boolean;
   seen: boolean;
   participantDetails: {
+    image: string;
     _id: string;
     email: string;
     username: string;
-    websocketId: string;
     __v: number;
   };
 }
@@ -60,13 +70,11 @@ export interface LoginResult {
   email: string;
   username: string;
   userID: string;
-  websocketId: string;
+  phone: string;
+  image: string;
 }
-
-export interface MessageInterface {
-  message: string;
-  time?: Date;
-  isReceiver: boolean;
+export interface CookieInterface extends LoginResult {
+  expiresIn: string;
 }
 
 export interface DetailsObjectInterface {
@@ -84,4 +92,5 @@ export interface DetailsObjectInterface {
     | "msgSeen";
   sender: string;
   receiver: string;
+  _id?: string;
 }

@@ -1,4 +1,4 @@
-import  { InputHTMLAttributes, KeyboardEvent } from "react";
+import { InputHTMLAttributes, KeyboardEvent } from "react";
 import { NUMBER_REGEX } from "../../utils/constants";
 
 interface OTPProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -17,12 +17,11 @@ export default function OTP({
   onchange,
   ...rest
 }: OTPProps) {
-
   function handleNumkeyInput(event: KeyboardEvent<HTMLInputElement>) {
     event.preventDefault();
     const keyName = event.key;
     const prevElement = event.currentTarget
-      .previousElementSibling as HTMLInputElement
+      .previousElementSibling as HTMLInputElement;
     const nextElement = event.currentTarget
       .nextElementSibling as HTMLInputElement;
 
@@ -68,7 +67,7 @@ export default function OTP({
             type="number"
             pattern="[0-9]+"
             onKeyDown={handleNumkeyInput}
-            onChange={(e) => {
+            onChange={() => {
               //console.log(e.target.value);
             }}
             maxLength={1}

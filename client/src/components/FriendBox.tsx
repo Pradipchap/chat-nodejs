@@ -1,46 +1,74 @@
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   ChatterDetailsInterface,
   ChatterInterface,
 } from "../../interfaces/dataInterfaces";
 import { useAppDispatch, useAppSelector } from "../../utils/reduxHooks";
-import { updateCurrentChatter } from "../../redux/slices/ChatSlice";
+import {
+  updateChatterDetails,
+  updateSeenStatus,
+} from "../../redux/slices/ChatSlice";
 import useDateDetails from "../../functions/useDateDetails";
-import { useContext, useEffect, useLayoutEffect, useState } from "react";
+import {
+  Suspense,
+  lazy,
+  useContext,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useState,
+} from "react";
 import { SERVER_BASE_URL } from "../../utils/constants";
 import sendSocketMessage from "../../functions/sendSocketMessage";
 import { WsContext } from "../../utils/WsProvider";
+import useGetChatter from "../../customHooks/useGetChatter";
+const FriendBoxSkeleton = lazy(() => import("./Skeleton/FriendBoxSkeleton"));
+import ProfileImage from "../assets/avatar.svg";
 
-export default function FriendBox({
+export default function FriendBox({ ...props }: ChatterInterface) {
+  return (
+    <Suspense fallback={<FriendBoxSkeleton />}>
+      <FriendBoxUI {...props} />
+    </Suspense>
+  );
+}
+
+function FriendBoxUI({
   chatterID,
   _id,
   message,
   whoMessaged,
   datetime,
+  relation,
 }: ChatterInterface) {
-  const wsClient  = useContext(WsContext);
-
+  const wsClient = useContext(WsContext);
   const { userID: primaryChatter, accessToken } = useAppSelector(
     (state) => state.currentUser
   );
-  const currentChat = useAppSelector((state) => state.chat);
-
-  const [details, setDetails] = useState<ChatterDetailsInterface | null>(null);
-  const isActive =
-    currentChat.secondaryChatter === details?.participantDetails._id;
-  const timePassed = useDateDetails(
-    new Date(
-      datetime ? datetime : details?.latestMessage?.datetime || new Date()
-    )
+  const secondaryChatter = useGetChatter();
+  const secondaryChatterFromRedux = useAppSelector(
+    (state) => state.chat.secondaryChatter
   );
 
-  const [isMsgWhite, setIsMsgWhite] = useState(false);
-  const dispatch = useAppDispatch();
+  const [details, setDetails] = useState<ChatterDetailsInterface | null>(null);
+  const isActive = useMemo(
+    () => secondaryChatter === details?.participantDetails._id,
+    [secondaryChatter, details]
+  );
+  const timePassed = useDateDetails(
+    datetime ? datetime : details?.latestMessage?.datetime || ""
+  );
 
-  useEffect(() => {
+  const [isMsgRed, setisMsgRed] = useState(false);
+  const dispatch = useAppDispatch();
+  const navigate = useNavigate();
+
+  useLayoutEffect(() => {
     async function getChatterDetails() {
       try {
-        const response = await fetch(`${SERVER_BASE_URL}/api/getChatter`, {
+        const apiEndPoint = relation === "FRIEND" ? "getChatter" : "notChatter";
+        console.log(apiEndPoint)
+        const response = await fetch(`${SERVER_BASE_URL}/api/${apiEndPoint}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -49,24 +77,37 @@ export default function FriendBox({
           body: JSON.stringify({ requestID: chatterID }),
         });
         const result: ChatterDetailsInterface = await response.json();
-        console.log(result);
         setDetails(result);
-        console.log(details?.seen);
+        const probableChatterID = result?.participantDetails._id;
+        if (secondaryChatterFromRedux === probableChatterID) {
+          dispatch(
+            updateChatterDetails({
+              name: result?.participantDetails.username,
+              image: result.participantDetails.image,
+              relation: relation,
+            })
+          );
+          navigate(`/chat/${probableChatterID}`);
+        }
+        console.log(await result?.seen);
         if (result?.seen) {
-          setIsMsgWhite(false);
+          setisMsgRed(false);
+          dispatch(updateSeenStatus(true));
         } else {
-          setIsMsgWhite(true);
+          if (result.latestMessage?.sender === chatterID) {
+            setisMsgRed(true);
+          }
         }
       } catch (error) {
-        //console.log(error);
+        console.log(error);
       }
     }
     getChatterDetails();
   }, []);
 
   useEffect(() => {
-    if (wsClient instanceof WebSocket && isActive) {
-      console.log("first");
+    if (wsClient instanceof WebSocket && isActive && isMsgRed) {
+      setisMsgRed(false);
       sendSocketMessage({
         sender: primaryChatter,
         receiver: chatterID || "",
@@ -78,100 +119,93 @@ export default function FriendBox({
   }, [isActive, message]);
 
   useLayoutEffect(() => {
+    console.log(message);
     function handleMsgWhite() {
-      console.log(isActive, message);
-      // if (message) {
-      //   if (!isActive) setIsMsgWhite(true);
-      //   else setIsMsgWhite(false);
-      //   return;
-      // } else {
-      //   if (details?.seen) {
-      //     setIsMsgWhite(false);
-      //   } else {
-      //     setIsMsgWhite(true);
-      //   }
-      // }
       if (isActive) {
-        setIsMsgWhite(false);
+        setisMsgRed(false);
       } else {
-        if (whoMessaged === chatterID) {
-          setIsMsgWhite(true);
-          return;
-        } else {
-          setIsMsgWhite(false);
+        if (typeof message !== "undefined") {
+          setisMsgRed(true);
           return;
         }
-        if (typeof message !== "undefined") {
-          setIsMsgWhite(true);
+        if (whoMessaged === chatterID) {
+          setisMsgRed(true);
+          return;
+        } else {
+          setisMsgRed(false);
           return;
         }
       }
     }
 
     handleMsgWhite();
-  }, [isActive, message]);
+  }, [message]);
 
   if (typeof _id === "undefined") {
     return null;
   }
 
   function updateChatter() {
+    console.log(details?.participantDetails.image)
+    console.log(relation)
     dispatch(
-      updateCurrentChatter({
+      updateChatterDetails({
         primaryChatter: primaryChatter,
         secondaryChatter: chatterID,
+        relation: relation,
+        name: details?.participantDetails.username,
+        image: details?.participantDetails.image,
       })
     );
-    //console.log(primaryChatter, chatterID);
-    //console.log("updated");
+    navigate(`/chat/${chatterID}`);
   }
   return (
-    <Link
-      to={`chat/${chatterID}`}
+    <button
       onClick={updateChatter}
       className={`${
-        isActive ? "bg-gray-700" : "b"
-      } px-2 rounded-lg flex items-center h-16 gap-3 mt-2 w-full`}
+        isActive ? "bg-gray-400/20" : "hover:bg-gray-500/20"
+      } px-2  rounded-lg flex items-center h-16 gap-3 mt-2 w-full`}
     >
-      <div className="relative w-14 h-14 bg-red-500 rounded-full">
-        {/* <img
-          src={image}
+      <div className="relative w-12 h-12  rounded-full">
+        <img
+          src={details?.participantDetails.image || ProfileImage}
           alt="user image"
           height={20}
           width={20}
           className="h-full w-full rounded-full"
-        /> */}
-        <div className="h-3 w-3 bg-green-600 rounded-full absolute bottom-[2%] right-[10%]" />
+        />
+        {details?.isActive && (
+          <div className="h-3.5 w-3.5 bg-green-600 rounded-full absolute bottom-[2%] right-[10%]" />
+        )}
       </div>
-
       <div className="flex-1 h-full py-1 flex flex-col justify-start items-start">
         {" "}
-        <p className="text-lg font-bold text-white">
+        <p className="text-lg font-medium text-gray-700">
           {details?.participantDetails.username}
         </p>
         <div
           className={`flex justify-between items-center gap-2 pt-1 ${
-            isMsgWhite ? "text-white font-black" : "text-gray-400 font-normal"
+            isMsgRed ? "text-red-600 font-black" : "text-gray-700 font-normal"
           }`}
         >
           {message ? (
             <p className="text-[13px] max-w-32 truncate ">
               {whoMessaged === primaryChatter
                 ? "you"
-                : details?.participantDetails.username.slice(0, 5)}{" "}
+                : details?.participantDetails.username.split(" ")[0]}{" "}
               : {message}
             </p>
-          ) : (
+          ) : details?.latestMessage ? (
             <p className={`text-[13px] max-w-32 truncate`}>
               {details?.latestMessage?.sender === primaryChatter
                 ? "you"
-                : details?.participantDetails.username.slice(0, 5)}{" "}
+                : details?.participantDetails.username.split(" ")[0]}{" "}
               : {details?.latestMessage?.message}
             </p>
-          )}
+          ) : null}
           <p className="text-[10px]">{timePassed}</p>
         </div>
       </div>
-    </Link>
+    </button>
   );
 }

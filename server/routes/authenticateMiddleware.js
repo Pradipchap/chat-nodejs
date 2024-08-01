@@ -1,14 +1,17 @@
 const jwt = require("jsonwebtoken");
-
-function authenticate(req, res, next) {
+async function authenticate(req, res, next) {
   try {
     const token = req.headers["authorization"].split(" ")[1];
     if (!token) {
       res.status(401).json({ error: "access denied" });
     }
-    console.log("token", token);
     const isCorrect = jwt.verify(token, process.env.JWT_SECRET);
-    req.body.userID = isCorrect.userID;
+    if(!isCorrect){
+      res.status(401).json({ error: "access denied" });
+    }
+    if (req.headers["content-type"].split(";")[0]!=="multipart/form-data") {
+      req.body.userID = isCorrect.userID;
+    }
     next();
   } catch (error) {
     res.status(401).json({

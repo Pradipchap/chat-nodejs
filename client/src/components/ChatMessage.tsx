@@ -1,9 +1,11 @@
+import { lazy } from "react";
 import { MessageInterface } from "../../interfaces/dataInterfaces";
+const ProfilePic = lazy(() => import("./ProfilePic"));
 
 export default function ChatMessage({
   message,
-  time,
   isReceiver,
+  image,
 }: MessageInterface) {
   const rotation = isReceiver ? "-rotate-180" : "";
   const align = isReceiver ? "self-start" : "self-end flex-row-reverse";
@@ -11,10 +13,13 @@ export default function ChatMessage({
     <div
       className={`${rotation} ${align} elf-end flex-row-reverse h-12 w-max float-end flex gap-2 items-center`}
     >
-      <div className={`${rotation} h-10 w-10 bg-red-600 rounded-full`}></div>
+      <ProfilePic
+        className={`${rotation} h-10 w-10 rounded-full`}
+        image={isReceiver ? image : null}
+      />
       <div>
         <p
-          className={`${rotation} rounded-2xl px-2 py-1 rounded-tr-none bg-gray-500`}
+          className={`${rotation} rounded-2xl px-2 py-1 rounded-tr-none text-gray-800 font-light bg-gray-300`}
         >
           {message}
         </p>

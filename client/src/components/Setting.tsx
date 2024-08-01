@@ -1,41 +1,42 @@
-import { useNavigate } from "react-router-dom";
-import Loginstatus from "./Loginstatus";
-import PopupOver from "./Popups/Popup";
-import Button from "./Button";
-import { icon } from "leaflet";
+import { lazy } from "react";
+import Icon from "./Icon";
+import { useLocation } from "react-router-dom";
+import { UserNavigationItems } from "../../utils/constants";
+const Loginstatus = lazy(() => import("./Loginstatus"));
 
+const items = [
+  { link: "chat", children: <Icon name="Message" className="text-inherit" /> },
+  { link: "friends", children: <Icon name="Users" className="text-inherit" /> },
+];
 export default function Setting() {
-  return (
-    <div className="absolute bottom-0 w-full right-0 px-2 h-12 flex bg-gray-600 justify-between items-center">
-      <p>asd</p>
-      <PopupOver content={<Content />} targetIndependent={true}>
-        <Loginstatus className="rounded-full bg-transparent" />
-      </PopupOver>
-    </div>
-  );
-}
+  const location = useLocation().pathname.split("/")[1];
+  const isFriendsActive = UserNavigationItems.some((item) => {
+    return location === item.url;
+  });
 
-function Content() {
-  const navigate = useNavigate();
   return (
-    <div className="py-4 px-2 w-44 bg-blue-900 shadow-md rounded">
-      {[
-        { name: "Profile", url: "profile", iconName: "Profile" },
-        { name: "Friends", url: "friends/friends", iconName: "Users" },
-        { name: "Setting", url: "setting", iconName: "Setting" },
-      ].map((element) => {
+    <div className="px-2 min-h-screen max-w-16 min-w-14 bg-gray-200/70 flex flex-col py-10 gap-5 border-t border-gray-300 justify-start items-center">
+      {items.map((item, index) => {
         return (
-          <Button
-            key={element.name}
-            onClick={() => navigate(`/${element.url}`)}
-            className="bg-transparent w-full justify-around hover:bg-white/5"
-            icon={element.iconName}
-            iconClassName="text-white"
+          <a
+            href={`/${item.link}`}
+            key={item.link}
+            className={` rounded-lg flex items-center justify-center w-full h-12 ${
+              item.link === location || (index === 1 && isFriendsActive)
+                ? "bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-500 via-blue-400 to-blue-600 text-gray-300"
+                : "text-gray-500"
+            } `}
           >
-            {element.name}
-          </Button>
+            {item.children}
+          </a>
         );
       })}
+      <a
+        href={`/profile`}
+        className={`rounded-lg mt-auto flex items-center justify-center w-full h-12`}
+      >
+        <Loginstatus className="rounded-full" />
+      </a>
     </div>
   );
 }

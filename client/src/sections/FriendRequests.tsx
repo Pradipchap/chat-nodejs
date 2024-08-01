@@ -1,7 +1,10 @@
-import { useAppSelector } from "../../utils/reduxHooks";
+import { useAppDispatch, useAppSelector } from "../../utils/reduxHooks";
 import { SERVER_BASE_URL, SUBMIT_STATUS } from "../../utils/constants";
-import { useState } from "react";
-import StatusButton from "../components/StatusButton";
+import { lazy, useState } from "react";
+import Pagination from "../components/Pagination";
+const StatusButton = lazy(() => import("../components/StatusButton"));
+import useUsersFetch from "../../customHooks/useUsersFetch";
+import { pushChatters } from "../../redux/slices/UsersSlice";
 
 interface props {
   userID?: string;
@@ -11,27 +14,49 @@ interface props {
 }
 
 export default function FriendRequests() {
-  const friendRequests = useAppSelector((state) => state.users.FriendRequests);
+  const {
+    pageNo,
+    users: friendRequests,
+    setPageNo,
+    totalData,
+  } = useUsersFetch({ currentPath: "friendRequests" });
 
   return (
-    <div className="flex gap-5 p-2">
-      {friendRequests.length > 0 &&
-        friendRequests[0] !== null &&
-        friendRequests.map((item) => {
-          return (
-            <SendRequestCard
-              username={item.username}
-              email={item.email}
-              userID={item._id}
-            />
-          );
-        })}
+    <div className="p-2 mt-10">
+      <div className="flex gap-5 p-2">
+        {friendRequests.length > 0 &&
+          friendRequests[0] !== null &&
+          friendRequests.map((item) => {
+            return (
+              <SendRequestCard
+                key={item._id}
+                username={item.username}
+                email={item.email}
+                userID={item._id}
+              />
+            );
+          })}
+      </div>
+      {totalData > 0 ? (
+        <Pagination
+          currentPage={pageNo}
+          dataLength={totalData}
+          dataPerPage={10}
+          onPageChange={setPageNo}
+        />
+      ) : (
+        <div className="m-auto w-max text-lg font-medium">
+          Sorry , there are no friend requests <br />{" "}
+          <p>Please ,send requests</p>{" "}
+        </div>
+      )}
     </div>
   );
 }
 
-function SendRequestCard({ userID, username }: props) {
+function SendRequestCard({ userID, username, email }: props) {
   const currentUser = useAppSelector((state) => state.currentUser);
+  const dispatch = useAppDispatch();
   const [requestStatus, setrequestStatus] = useState<SUBMIT_STATUS>(
     SUBMIT_STATUS.IDLE
   );
@@ -42,24 +67,33 @@ function SendRequestCard({ userID, username }: props) {
     try {
       const requestData = { requestID: userID };
       setrequestStatus(SUBMIT_STATUS.LOADING);
-      const response = await fetch(
-        SERVER_BASE_URL + "/api/confirmRequest?pageNo=",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: "Bearer" + " " + currentUser.accessToken,
-          },
-          body: JSON.stringify(requestData),
-        }
-      );
-      //console.log("response", response);
+      const response = await fetch(SERVER_BASE_URL + "/api/confirmRequest", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer" + " " + currentUser.accessToken,
+        },
+        body: JSON.stringify(requestData),
+      });
       if (response.ok) {
         setrequestStatus(SUBMIT_STATUS.SUCCESS);
+        const convo = await response.json();
+        console.log(convo);
+        dispatch(
+          pushChatters({
+            username: username,
+            email: email,
+            _id: convo.convoID,
+            chatterID: userID,
+            relation: "FRIEND",
+          })
+        );
       } else {
-        throw new Error();
+        console.log("first");
+        throw "";
       }
     } catch (error) {
+      console.log(error);
       setrequestStatus(SUBMIT_STATUS.FAILED);
       setTimeout(() => {
         setrequestStatus(SUBMIT_STATUS.IDLE);
@@ -105,11 +139,13 @@ function SendRequestCard({ userID, username }: props) {
         <div className="flex mt-4 md:mt-6"></div>
         <div className="flex flex-col gap-2 w-full">
           <StatusButton
+            type="button"
             idleIcon="Check"
             requestStatus={requestStatus}
             onClick={acceptRequest}
           />
           <StatusButton
+            type="button"
             idleIcon="Delete"
             className="bg-black"
             requestStatus={requestStatusDelete}
